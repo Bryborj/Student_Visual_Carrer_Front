@@ -67,7 +67,7 @@ const Layout = ({ children, stats, onReset }) => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-grow pt-20 pb-8 px-4 sm:px-6 lg:px-8 overflow-x-auto print:p-0 print:overflow-visible">
+            <main className="grow pt-20 pb-8 px-4 sm:px-6 lg:px-8 overflow-x-auto print:p-0 print:overflow-visible">
                 {/* Print Header */}
                 <div className="hidden print:block mb-8 text-center">
                     <h1 className="text-3xl font-bold mb-2">Plan de Estudios - Ingeniería en Ciencias de la Computación</h1>
@@ -78,6 +78,10 @@ const Layout = ({ children, stats, onReset }) => {
                     {children}
                 </div>
             </main>
+            {/* Footer */}
+            <footer className="bg-gray-800 text-white py-4 text-center text-sm">
+                <p>© 2025 Z-SH by <a href="https://github.com/Bryborj" className="text-blue-400 hover:underline">Bryan Borges</a></p>
+            </footer>
         </div>
     );
 };
