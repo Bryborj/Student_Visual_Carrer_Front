@@ -1,0 +1,114 @@
+{
+  "institucion": "BUAP",
+  "facultad": "Facultad de Ciencias de la Computación",
+  "carrera": "Ingeniería en Ciencias de la Computación",
+  "plan_de_estudios": [
+    {
+      "semestre": 1,
+      "nivel": "Nivel Básico",
+      "materias": [
+        { "materia": "PROGRAMACIÓN BÁSICA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "INGENIERÍA SOCIAL", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "FUNDAMENTOS DE MATEMÁTICAS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "ÁLGEBRA SUPERIOR APLICADA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "INGLÉS I", "horas_teoria": 2, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 4 }
+      ]
+    },
+    {
+      "semestre": 2,
+      "nivel": "Nivel Básico",
+      "materias": [
+        { "materia": "PROGRAMACIÓN AVANZADA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "FÍSICA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "CÁLCULO DIFERENCIAL CON APLICACIONES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "ÁLGEBRA LINEAL CON APLICACIONES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "INTRODUCCIÓN A LA FORMACIÓN GENERAL UNIVERSITARIA", "horas_teoria": 1, "horas_laboratorio": 2, "horas_trabajo_independiente": 16, "creditos": 4 },
+        { "materia": "INGLÉS II", "horas_teoria": 2, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 4 }
+      ]
+    },
+    {
+      "semestre": 3,
+      "nivel": "Nivel Básico",
+      "materias": [
+        { "materia": "ESTRUCTURAS DE DATOS Y SUS APLICACIONES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "CÁLCULO INTEGRAL CON APLICACIONES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "MATEMÁTICAS DISCRETAS Y SUS APLICACIONES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "CIRCUITOS ELÉCTRICOS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "LENGUAJE DE BAJO NIVEL", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "INGLÉS III", "horas_teoria": 2, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 4 }
+      ]
+    },
+    {
+      "semestre": 4,
+      "nivel": "Nivel Básico",
+      "materias": [
+        { "materia": "LÓGICA MATEMÁTICA APLICADA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "ECUACIONES DIFERENCIALES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "CIRCUITOS ELECTRÓNICOS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "GRAFICACIÓN", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "FORMACIÓN GENERAL DISCIPLINARIA", "horas_teoria": 1, "horas_laboratorio": 2, "horas_trabajo_independiente": 16, "creditos": 4 },
+        { "materia": "INGLÉS IV", "horas_teoria": 2, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 4 }
+      ]
+    },
+    {
+      "semestre": 5,
+      "nivel": "Nivel Formativo",
+      "materias": [
+        { "materia": "ANÁLISIS Y DISEÑO DE ALGORITMOS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "PROBABILIDAD Y ESTADÍSTICA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "SISTEMAS OPERATIVOS I", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "DISEÑO DIGITAL", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "FORMACIÓN GENERAL PROFESIONAL", "horas_teoria": 1, "horas_laboratorio": 2, "horas_trabajo_independiente": 16, "creditos": 4 }
+      ]
+    },
+    {
+      "semestre": 6,
+      "nivel": "Nivel Formativo",
+      "materias": [
+        { "materia": "INGENIERÍA DE SOFTWARE I", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "BASES DE DATOS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "PROGRAMACIÓN CONCURRENTE Y PARALELA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "SISTEMAS OPERATIVOS II", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "ARQUITECTURA DE COMPUTADORAS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "OPTATIVA I", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "OPTATIVA COMPLEMENTARIA I", "horas_teoria": null, "horas_laboratorio": null, "horas_trabajo_independiente": null, "creditos": null }
+      ]
+    },
+    {
+      "semestre": 7,
+      "nivel": "Nivel Formativo",
+      "materias": [
+        { "materia": "MINERÍA DE DATOS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "CONTROL", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "MODELOS DE REDES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "VINCULACIÓN E INTEGRACIÓN SOCIAL", "horas_teoria": 0, "horas_laboratorio": 0, "horas_trabajo_independiente": 0, "creditos": 4 },
+        { "materia": "GESTIÓN DE PROYECTOS INNOVADORES", "horas_teoria": 1, "horas_laboratorio": 2, "horas_trabajo_independiente": 32, "creditos": 5 },
+        { "materia": "OPTATIVA COMPLEMENTARIA II", "horas_teoria": null, "horas_laboratorio": null, "horas_trabajo_independiente": null, "creditos": null }
+      ]
+    },
+    {
+      "semestre": 8,
+      "nivel": "Nivel Formativo",
+      "materias": [
+        { "materia": "INTELIGENCIA ARTIFICIAL I", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "DESARROLLO DE SISTEMAS WEB", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "REDES DE COMPUTADORAS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "SISTEMAS EMPOTRADOS", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "OPTATIVA II", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "OPTATIVA COMPLEMENTARIA III", "horas_teoria": null, "horas_laboratorio": null, "horas_trabajo_independiente": null, "creditos": null }
+      ]
+    },
+    {
+      "semestre": 9,
+      "nivel": "Nivel Formativo",
+      "materias": [
+        { "materia": "PROGRAMACIÓN DISTRIBUIDA", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "ADMINISTRACIÓN DE REDES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "DESARROLLO DE APLICACIONES MÓVILES", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 0, "creditos": 6 },
+        { "materia": "PRÁCTICA PROFESIONAL", "horas_teoria": 0, "horas_laboratorio": 0, "horas_trabajo_independiente": 0, "creditos": 15 },
+        { "materia": "SISTEMAS DE HARDWARE/SOFTWARE", "horas_teoria": 3, "horas_laboratorio": 2, "horas_trabajo_independiente": 16, "creditos": 7 },
+        { "materia": "OPTATIVA COMPLEMENTARIA IV", "horas_teoria": null, "horas_laboratorio": null, "horas_trabajo_independiente": null, "creditos": null }
+      ]
+    }
+  ]
+}

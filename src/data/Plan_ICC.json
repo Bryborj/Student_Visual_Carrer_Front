@@ -1,5 +1,5 @@
 {
-    "name": "Plan_ICC",
+    "name": "Ingeniría en Ciencias de la Computación",
     "courses": [
         {
             "cluster": 1,
@@ -523,5 +523,7 @@
                 }
             ]
         }
-    ]
+    ],
+    "min_credits" : 287,
+    "max_credits" : 311
 }
