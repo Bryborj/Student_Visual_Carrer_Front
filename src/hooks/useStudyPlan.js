@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import planData from '../data/Plan_ICC.json';
+import planData from '../data/Plan_ICC-2024-I.json';
 import { normalizeData, isSubjectAvailable, getTotalPlanCredits, getPassedCredits } from '../utils/academicLogic';
 
 const STORAGE_KEY = 'academic_plan_passed_subjects';
@@ -52,7 +52,7 @@ export const useStudyPlan = () => {
     // - AVAILABLE (not passed AND reqs met)
     // - LOCKED (not passed AND reqs NOT met)
     const getSubjectStatus = (subject) => {
-        if (passedSubjects.includes(subject.name)) return 'PASSED';
+        if (passedSubjects.includes(subject.subject)) return 'PASSED';
 
         // Check requirements
         const available = isSubjectAvailable(subject, passedSubjects, subjectsByName, unlockToName, totalCredits);

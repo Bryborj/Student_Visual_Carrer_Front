@@ -7,7 +7,7 @@ function App() {
     const { planData, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
 
     return (
-        <Layout stats={stats} onReset={resetPlan}>
+        <Layout stats={stats} onReset={resetPlan} title={planData.career}>
             <div className="flex gap-8 pb-8 print:gap-4 print:pb-0">
                 {planData.courses.map(cluster => (
                     <ClusterColumn
@@ -15,7 +15,7 @@ function App() {
                         cluster={cluster.cluster}
                         subjects={cluster.content}
                         getSubjectStatus={getSubjectStatus}
-                        onToggleSubject={toggleSubject} // Pass the name
+                        onToggleSubject={toggleSubject}
                     />
                 ))}
             </div>

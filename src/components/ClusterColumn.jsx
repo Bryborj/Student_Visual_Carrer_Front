@@ -13,7 +13,7 @@ const ClusterColumn = ({ cluster, subjects, getSubjectStatus, onToggleSubject })
             <div className="flex flex-col gap-3">
                 {subjects.map(subject => (
                     <SubjectNode
-                        key={subject.name}
+                        key={subject.id || subject.subject || subject.name}
                         subject={subject}
                         status={getSubjectStatus(subject)}
                         onToggle={onToggleSubject}

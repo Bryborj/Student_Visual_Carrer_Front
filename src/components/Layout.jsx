@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Layout = ({ children, stats, onReset }) => {
+const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -30,7 +30,7 @@ const Layout = ({ children, stats, onReset }) => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                            Plan de Estudios ICC
+                            {title}
                         </h1>
                         <div className="hidden md:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
                             <span>{Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos</span>

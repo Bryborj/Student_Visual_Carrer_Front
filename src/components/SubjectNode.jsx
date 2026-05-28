@@ -23,13 +23,13 @@ const SubjectNode = ({ subject, status, onToggle }) => {
     return (
         <div
             className={`${baseStyles} ${statusStyles[status] || statusStyles.LOCKED}`}
-            onClick={() => status !== 'LOCKED' && onToggle(subject.name)}
+            onClick={() => status !== 'LOCKED' && onToggle(subject.subject || subject.name)}
             title={status === 'LOCKED' ? 'Prerrequisitos pendientes' : 'Click para alternar estado'}
         >
             {/* Header */}
             <div className="flex justify-between items-start">
                 <span className="text-xs font-bold uppercase opacity-70 tracking-wider">
-                    {subject.Credits} Créditos
+                    {subject.credits !== undefined ? subject.credits : subject.Credits} Créditos
                 </span>
                 {status === 'PASSED' && (
                     <span className="text-xs bg-white/20 px-1.5 rounded">✓</span>
@@ -39,7 +39,7 @@ const SubjectNode = ({ subject, status, onToggle }) => {
             {/* Body */}
             <div className="flex-grow flex items-center justify-center text-center">
                 <h3 className="text-sm font-bold leading-tight line-clamp-3">
-                    {subject.name}
+                    {subject.subject || subject.name}
                 </h3>
             </div>
 

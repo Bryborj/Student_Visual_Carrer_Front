@@ -197,7 +197,7 @@
           "lab": 2,
           "autonomous": 0,
           "credits": 6,
-          "required": "EDA",
+          "required": "EDE",
           "position_Y": 1
         },
         {
@@ -227,7 +227,7 @@
           "lab": 2,
           "autonomous": 0,
           "credits": 6,
-          "required": "EDA",
+          "required": "EDE",
           "position_Y": 4
         },
         {
@@ -578,5 +578,7 @@
         }
       ]
     }
-  ]
+  ],
+  "min_credits": 287,
+  "max_credits": 311
 }

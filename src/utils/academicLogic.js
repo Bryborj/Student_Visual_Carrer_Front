@@ -4,13 +4,7 @@
  * @returns {number} Total credits.
  */
 export const getTotalPlanCredits = (data) => {
-    let total = 0;
-    data.courses.forEach(cluster => {
-        cluster.content.forEach(subject => {
-            total += subject.Credits;
-        });
-    });
-    return total;
+    return data.min_credits;
 };
 
 /**
@@ -24,7 +18,8 @@ export const getPassedCredits = (passedSubjectNames, subjectsByName) => {
     passedSubjectNames.forEach(name => {
         const subject = subjectsByName[name];
         if (subject) {
-            total += subject.Credits;
+            const credits = subject.credits !== undefined ? subject.credits : (subject.Credits || 0);
+            total += credits;
         }
     });
     return total;
@@ -37,23 +32,29 @@ export const getPassedCredits = (passedSubjectNames, subjectsByName) => {
  */
 export const normalizeData = (data) => {
     const subjectsByName = {};
-    const unlockToName = {};
+    const idToName = {};
 
     data.courses.forEach(cluster => {
         cluster.content.forEach(subject => {
-            subjectsByName[subject.name] = { ...subject, cluster: cluster.cluster };
+            const subjectName = subject.subject || subject.name;
+            subjectsByName[subjectName] = { ...subject, cluster: cluster.cluster };
 
+            if (subject.id) {
+                idToName[subject.id] = subjectName;
+            }
+
+            // For backward compatibility with the old JSON format
             if (subject.Unlock) {
                 if (Array.isArray(subject.Unlock)) {
-                    subject.Unlock.forEach(code => unlockToName[code] = subject.name);
+                    subject.Unlock.forEach(code => idToName[code] = subjectName);
                 } else {
-                    unlockToName[subject.Unlock] = subject.name;
+                    idToName[subject.Unlock] = subjectName;
                 }
             }
         });
     });
 
-    return { subjectsByName, unlockToName };
+    return { subjectsByName, unlockToName: idToName };
 };
 
 /**
@@ -70,17 +71,18 @@ export const normalizeData = (data) => {
  * @returns {boolean} True if subject is available (unlocked).
  */
 export const isSubjectAvailable = (subject, passedSubjectNames, subjectsByName, unlockToName, totalPlanCredits) => {
-    if (passedSubjectNames.includes(subject.name)) return false; // Already passed
+    const subjectName = subject.subject || subject.name;
+    if (passedSubjectNames.includes(subjectName)) return false; // Already passed
 
-    const { Required } = subject;
+    const requiredCodes = subject.required !== undefined ? subject.required : subject.Required;
 
     // If no requirements, it's available (unless passed, checked above)
-    if (!Required) return true;
+    if (!requiredCodes || requiredCodes === "") return true;
 
     // Helper to check if a specific code/rule is satisfied
     const checkCode = (code) => {
         // Special Rule: 70% credits
-        if (code === "70% de créditos aprobados") {
+        if (code === "70%" || (typeof code === "string" && code.includes("70%"))) {
             const passedCredits = getPassedCredits(passedSubjectNames, subjectsByName);
             // Avoid division by zero
             if (totalPlanCredits === 0) return false;
@@ -102,10 +104,10 @@ export const isSubjectAvailable = (subject, passedSubjectNames, subjectsByName, 
     };
 
     // If Required is an array, ALL must be satisfied
-    if (Array.isArray(Required)) {
-        return Required.every(checkCode);
+    if (Array.isArray(requiredCodes)) {
+        return requiredCodes.every(checkCode);
     }
 
     // Single requirement
-    return checkCode(Required);
+    return checkCode(requiredCodes);
 };
