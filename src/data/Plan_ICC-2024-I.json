@@ -208,7 +208,7 @@
           "autonomous": 0,
           "credits": 6,
           "required": "CIA",
-          "position_Y": 2
+          "position_Y": 3
         },
         {
           "id": "CEs",
@@ -218,7 +218,7 @@
           "autonomous": 0,
           "credits": 6,
           "required": "CE",
-          "position_Y": 3
+          "position_Y": 4
         },
         {
           "id": "G",
@@ -228,7 +228,7 @@
           "autonomous": 0,
           "credits": 6,
           "required": "EDE",
-          "position_Y": 4
+          "position_Y": 5
         },
         {
           "id": "FGD",
@@ -238,7 +238,7 @@
           "autonomous": 16,
           "credits": 4,
           "required": "",
-          "position_Y": 5
+          "position_Y": 9
         },
         {
           "id": "ING4",
@@ -248,7 +248,7 @@
           "autonomous": 0,
           "credits": 4,
           "required": "ING3",
-          "position_Y": 6
+          "position_Y": 10
         }
       ]
     },

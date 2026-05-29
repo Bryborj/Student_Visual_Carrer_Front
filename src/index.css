@@ -1,5 +1,45 @@
 @import "tailwindcss";
 
+@config "../tailwind.config.js";
+
+/* Custom styles for grid horizontal scrolling */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(200px, 1fr));
+    gap: var(--spacing-column-gutter, 1rem);
+    padding: var(--spacing-grid-margin, 2rem);
+    overflow-x: auto;
+    min-height: calc(100vh - 140px);
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--color-surface-container-low, #0b1c30);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-surface-variant, #26364a);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-outline, #909097);
+}
+
+/* Area Colors */
+.area-core { border-left-color: var(--color-tertiary, #4edea3); }
+.area-math { border-left-color: #f59e0b; }
+.area-general { border-left-color: #a3e635; }
+.area-empty { border: 1px dashed var(--color-outline-variant, #45464d); background: transparent; }
+
+/* Status colors */
+.status-passed { background-color: var(--color-tertiary-container, #001c10); border-color: var(--color-tertiary, #4edea3); }
+.status-current { background-color: var(--color-surface-container-highest, #26364a); border-color: #f59e0b; }
+.status-locked { background-color: var(--color-surface-container, #102034); border-color: var(--color-outline-variant, #45464d); }
+
+
 @media print {
   @page {
     margin: 0;

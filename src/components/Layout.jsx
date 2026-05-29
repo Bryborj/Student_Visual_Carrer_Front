@@ -24,63 +24,77 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex flex-col font-sans">
+        <div className="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col transition-colors duration-300">
             {/* Header - No Print */}
-            <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-50 print:hidden transition-colors duration-300">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <header className="bg-background border-b border-outline-variant sticky top-0 z-50 print:hidden transition-colors duration-300">
+                <div className="flex justify-between items-center w-full px-grid-margin py-4 max-w-container-max-width mx-auto">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-display-title font-display-title text-on-surface">
                             {title}
                         </h1>
-                        <div className="hidden md:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                            <span>{Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos</span>
-                            <span className="font-bold text-blue-600 dark:text-blue-400">({Math.round(stats.percentage)}%)</span>
+                        <div className="bg-surface-container px-3 py-1 rounded-full flex items-center gap-2 border border-outline-variant">
+                            <span className="text-metadata-label font-metadata-label text-on-surface-variant">
+                                {Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos
+                            </span>
+                            <div className="w-24 h-2 bg-surface-variant rounded-full overflow-hidden">
+                                <div className="h-full bg-tertiary" style={{ width: `${stats.percentage}%` }}></div>
+                            </div>
+                            <span className="text-metadata-label font-metadata-label text-tertiary">
+                                ({Math.round(stats.percentage)}%)
+                            </span>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <button
                             onClick={onReset}
-                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm font-medium mr-2"
-                            title="Reset Progress"
+                            aria-label="Reiniciar"
+                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
+                            title="Reiniciar"
                         >
-                            Reiniciar
+                            <span className="material-symbols-outlined text-error">refresh</span>
                         </button>
 
                         <button
                             onClick={handlePrint}
-                            className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                            aria-label="Imprimir"
+                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
                             title="Imprimir"
                         >
-                            🖨️ Imprimir
+                            <span className="material-symbols-outlined">print</span>
                         </button>
 
                         <button
                             onClick={() => setDarkMode(!darkMode)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                            aria-label="Modo Claro/Oscuro"
+                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
                             title="Alternar Modo Oscuro"
                         >
-                            {darkMode ? '☀️' : '🌙'}
+                            <span className="material-symbols-outlined text-[#f59e0b]">
+                                {darkMode ? 'light_mode' : 'dark_mode'}
+                            </span>
                         </button>
                     </div>
                 </div>
             </header>
 
             {/* Main Content */}
-            <main className="grow pt-20 pb-8 px-4 sm:px-6 lg:px-8 overflow-x-auto print:p-0 print:overflow-visible">
+            <main className="flex-1 overflow-hidden relative print:overflow-visible">
                 {/* Print Header */}
-                <div className="hidden print:block mb-8 text-center">
-                    <h1 className="text-3xl font-bold mb-2">Plan de Estudios - Ingeniería en Ciencias de la Computación</h1>
-                    <p>Progreso: {Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos ({Math.round(stats.percentage)}%)</p>
+                <div className="hidden print:block mb-8 mt-8 text-center">
+                    <h1 className="text-3xl font-bold mb-2 text-black">{title}</h1>
+                    <p className="text-black">Progreso: {Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos ({Math.round(stats.percentage)}%)</p>
                 </div>
 
-                <div className="min-w-fit mx-auto">
-                    {children}
-                </div>
+                {children}
             </main>
+            
             {/* Footer */}
-            <footer className="bg-gray-800 text-white py-4 text-center text-sm">
-                <p>© 2025 Z-SH by <a href="https://github.com/Bryborj" className="text-blue-400 hover:underline">Bryan Borges</a></p>
+            <footer className="bg-surface-container-lowest border-t border-outline-variant w-full py-6 px-grid-margin flex flex-col md:flex-row justify-between items-center text-center md:text-left mt-auto print:hidden">
+                <p className="text-body-md font-body-md text-on-surface-variant">© 2026 Z-SH by <a href="https://github.com/Bryborj" className="text-primary hover:underline">Bryan Borges</a>. All credits and prerequisites are subject to administrative verification.</p>
+                <div className="flex gap-4 mt-4 md:mt-0">
+                    <a className="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Academic Regulations</a>
+                </div>
             </footer>
         </div>
     );

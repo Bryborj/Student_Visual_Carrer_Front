@@ -8,7 +8,7 @@ function App() {
 
     return (
         <Layout stats={stats} onReset={resetPlan} title={planData.career}>
-            <div className="flex gap-8 pb-8 print:gap-4 print:pb-0">
+            <div className="grid-container max-w-container-max-width mx-auto gap-0 print:block print:max-w-none">
                 {planData.courses.map(cluster => (
                     <ClusterColumn
                         key={cluster.cluster}

@@ -2,24 +2,37 @@ import React from 'react';
 import SubjectNode from './SubjectNode';
 
 const ClusterColumn = ({ cluster, subjects, getSubjectStatus, onToggleSubject }) => {
+    // 10 filas máximo según el JSON
+    const maxRow = 10;
+    const rows = Array.from({ length: maxRow }, (_, i) => i + 1);
+
     return (
-        <div className="flex flex-col gap-4 min-w-56">
-            <div className="text-center py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-2">
-                <h2 className="font-bold text-gray-700 dark:text-gray-300">
-                    Semestre {cluster}
-                </h2>
+        <div className="flex flex-col gap-row-gap border-r border-outline-variant px-4 gap-4">
+            <div className="sticky top-0 bg-background/90 backdrop-blur-sm py-2 z-10 border-outline-variant mb-2">
+                <h2 className="text-semester-header font-semester-header text-center text-on-surface-variant">Semestre {cluster}</h2>
             </div>
 
-            <div className="flex flex-col gap-3">
-                {subjects.map(subject => (
-                    <SubjectNode
-                        key={subject.id || subject.subject || subject.name}
-                        subject={subject}
-                        status={getSubjectStatus(subject)}
-                        onToggle={onToggleSubject}
-                    />
-                ))}
-            </div>
+            {rows.map(rowIndex => {
+                // Compatible with old and new JSON formats
+                const subject = subjects.find(s => s.position_Y === rowIndex || s.Position === rowIndex);
+
+                if (subject) {
+                    return (
+                        <SubjectNode
+                            key={subject.id || subject.subject || subject.name}
+                            subject={subject}
+                            status={getSubjectStatus(subject)}
+                            onToggle={onToggleSubject}
+                        />
+                    );
+                } else {
+                    return (
+                        <div key={`empty-${rowIndex}`} className="area-empty h-32 rounded flex items-center justify-center opacity-30">
+                            <span className="material-symbols-outlined text-outline-variant">lock</span>
+                        </div>
+                    );
+                }
+            })}
         </div>
     );
 };
