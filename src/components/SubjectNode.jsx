@@ -44,8 +44,23 @@ const SubjectNode = ({ subject, status, onToggle }) => {
             </h3>
             
             <div className="mt-auto flex gap-2">
-                <span className="text-metadata-label font-metadata-label bg-surface-container px-1 py-0.5 rounded text-on-surface-variant">
-                    {theory} {lab} {auto}
+                <span className="text-metadata-label font-metadata-label bg-surface-container px-2 py-0.5 rounded text-on-surface-variant" title=''>
+                    <span className="group hover:bg-surface-container-high transition-colors duration-300 cursor-help relative pr-1">
+                        {theory}
+                        <span className="absolute left-8 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Horas de teoria
+                        </span>
+                    </span>
+                    <span className="group hover:bg-surface-container-high transition-colors duration-300 cursor-help relative pr-1">{lab}
+                        <span className="absolute left-8 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Horas de laboratorio
+                        </span>
+                    </span>
+                    <span className="group hover:bg-surface-container-high transition-colors duration-300 cursor-help relative">{auto}
+                        <span className="absolute left-8 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Horas de trabajo autonomo
+                        </span>
+                    </span>
                 </span>
             </div>
         </div>
