@@ -8,7 +8,7 @@ function App() {
 
     return (
         <Layout stats={stats} onReset={resetPlan} title={planData.career}>
-            <div className="grid-container max-w-container-max-width mx-auto gap-0 print:block print:max-w-none">
+            <div className="grid-container px-4 md:px-grid-margin py-4 md:py-8 max-w-container-max-width mx-auto gap-0 print:block print:max-w-none print:p-0">
                 {planData.courses.map(cluster => (
                     <ClusterColumn
                         key={cluster.cluster}

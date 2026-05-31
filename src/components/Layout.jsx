@@ -27,16 +27,16 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
         <div className="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col transition-colors duration-300">
             {/* Header - No Print */}
             <header className="bg-background border-b border-outline-variant sticky top-0 z-50 print:hidden transition-colors duration-300">
-                <div className="flex justify-between items-center w-full px-grid-margin py-4 max-w-container-max-width mx-auto">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-display-title font-display-title text-on-surface">
+                <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 md:px-grid-margin py-4 max-w-container-max-width mx-auto gap-4">
+                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 w-full md:w-auto text-center md:text-left">
+                        <h1 className="text-xl md:text-display-title font-display-title text-on-surface">
                             {title}
                         </h1>
-                        <div className="bg-surface-container px-3 py-1 rounded-full flex items-center gap-2 border border-outline-variant">
+                        <div className="bg-surface-container px-3 py-1 rounded-full flex items-center gap-2 border border-outline-variant w-fit mx-auto md:mx-0">
                             <span className="text-metadata-label font-metadata-label text-on-surface-variant">
-                                {Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos
+                                {Math.round(stats.passedCredits)} / {stats.totalCredits} <span className="hidden sm:inline">Créditos</span>
                             </span>
-                            <div className="w-24 h-2 bg-surface-variant rounded-full overflow-hidden">
+                            <div className="w-16 sm:w-24 h-2 bg-surface-variant rounded-full overflow-hidden">
                                 <div className="h-full bg-tertiary" style={{ width: `${stats.percentage}%` }}></div>
                             </div>
                             <span className="text-metadata-label font-metadata-label text-tertiary">
@@ -45,7 +45,7 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto">
                         <button
                             onClick={onReset}
                             aria-label="Reiniciar"
@@ -79,7 +79,7 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-hidden relative print:overflow-visible">
+            <main className="flex-1 overflow-auto relative print:overflow-visible">
                 {/* Print Header */}
                 <div className="hidden print:block mb-8 mt-8 text-center">
                     <h1 className="text-3xl font-bold mb-2 text-black">{title}</h1>

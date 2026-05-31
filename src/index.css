@@ -2,12 +2,10 @@
 
 @config "../tailwind.config.js";
 
-/* Custom styles for grid horizontal scrolling */
 .grid-container {
     display: grid;
     grid-template-columns: repeat(9, minmax(200px, 1fr));
     gap: var(--spacing-column-gutter, 1rem);
-    padding: var(--spacing-grid-margin, 2rem);
     overflow-x: auto;
     min-height: calc(100vh - 140px);
 }
