@@ -82,21 +82,18 @@ export const isSubjectAvailable = (subject, passedSubjectNames, subjectsByName, 
     // Helper to check if a specific code/rule is satisfied
     const checkCode = (code) => {
         // Special Rule: 70% credits
-        if (code === "70%" || (typeof code === "string" && code.includes("70%"))) {
+        if ((typeof code === "string" && code.includes("%"))) {
             const passedCredits = getPassedCredits(passedSubjectNames, subjectsByName);
-            // Avoid division by zero
             if (totalPlanCredits === 0) return false;
-            return (passedCredits / totalPlanCredits) >= 0.7;
+            code = code.replace("%", "");
+            const percentage = parseFloat(code) / 100;
+            return (passedCredits / totalPlanCredits) >= percentage;
         }
 
         // Standard Code Requirement
         const providerName = unlockToName[code];
 
-        // If the requirement code doesn't map to any subject, we have a problem.
-        // In a robust app, we might handle this gracefully or log a warning.
-        // For now, if provider not found, requirement is NOT met.
         if (!providerName) {
-            // console.warn(`Provider for code ${code} not found.`);
             return false;
         }
 

@@ -422,8 +422,7 @@
           "lab": 0,
           "autonomous": 0,
           "credits": 4,
-          "required": "",
-          "required_percentage": 0.7,
+          "required": "70%",
           "position_Y": 7
         },
         {
