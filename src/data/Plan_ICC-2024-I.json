@@ -218,7 +218,7 @@
           "autonomous": 0,
           "credits": 6,
           "required": "CE",
-          "position_Y": 4
+          "position_Y": 5
         },
         {
           "id": "G",
@@ -228,7 +228,7 @@
           "autonomous": 0,
           "credits": 6,
           "required": "EDE",
-          "position_Y": 5
+          "position_Y": 6
         },
         {
           "id": "FGD",
@@ -237,7 +237,7 @@
           "lab": 2,
           "autonomous": 16,
           "credits": 4,
-          "required": "",
+          "required": "IFGU",
           "position_Y": 9
         },
         {
@@ -302,7 +302,7 @@
           "lab": 2,
           "autonomous": 0,
           "credits": 4,
-          "required": "",
+          "required": "FGD",
           "position_Y": 9
         }
       ]
@@ -368,7 +368,7 @@
           "autonomous": 0,
           "credits": 6,
           "required": "",
-          "position_Y": 6
+          "position_Y": 9
         },
         {
           "id": "optC1",
