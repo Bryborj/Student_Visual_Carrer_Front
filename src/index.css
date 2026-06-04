@@ -2,6 +2,106 @@
 
 @config "../tailwind.config.js";
 
+:root {
+    --color-error-container: #ffdad6;
+    --color-secondary-container: #0566d9;
+    --color-on-primary: #ffffff;
+    --color-tertiary-fixed-dim: #4edea3;
+    --color-on-secondary-fixed-variant: #004395;
+    --color-tertiary: #006c4c;
+    --color-on-secondary-container: #e6ecff;
+    --color-secondary: #5c636a;
+    --color-on-primary-fixed-variant: #3f465c;
+    --color-surface-container-high: #e9ecef;
+    --color-primary: #0056b3;
+    --color-on-tertiary: #003824;
+    --color-tertiary-container: #89f8c7;
+    --color-outline-variant: #495057;
+    --color-on-error-container: #ffdad6;
+    --color-on-error: #690005;
+    --color-on-surface: #1a1c1e;
+    --color-surface-container: #e9ecef;
+    --color-on-background: #1a1c1e;
+    --color-surface-container-low: #e9ecef;
+    --color-on-tertiary-fixed: #002113;
+    --color-primary-container: #d8e2ff;
+    --color-secondary-fixed: #d8e2ff;
+    --color-surface-container-highest: #e9ecef;
+    --color-secondary-fixed-dim: #adc6ff;
+    --color-outline: #495057;
+    --color-surface-container-lowest: #e9ecef;
+    --color-surface-variant: #26364a;
+    --color-on-secondary-fixed: #001a42;
+    --color-background: #f8f9fa;
+    --color-error: #ba1a1a;
+    --color-surface-dim: #f8f9fa;
+    --color-on-tertiary-container: #002114;
+    --color-inverse-on-surface: #213145;
+    --color-on-primary-fixed: #131b2e;
+    --color-primary-fixed-dim: #bec6e0;
+    --color-on-secondary: #ffffff;
+    --color-on-tertiary-fixed-variant: #005236;
+    --color-inverse-primary: #565e74;
+    --color-on-surface-variant: #495057;
+    --color-on-primary-container: #d8e2ff;
+    --color-surface-bright: #2a3a4f;
+    --color-surface-tint: #bec6e0;
+    --color-primary-fixed: #dae2fd;
+    --color-inverse-surface: #d3e4fe;
+    --color-surface: #f8f9fa;
+    --color-tertiary-fixed: #6ffbbe;
+}
+
+.dark {
+    --color-error-container: #93000a;
+    --color-secondary-container: #0566d9;
+    --color-on-primary: #283044;
+    --color-tertiary-fixed-dim: #4edea3;
+    --color-on-secondary-fixed-variant: #004395;
+    --color-tertiary: #4edea3;
+    --color-on-secondary-container: #e6ecff;
+    --color-secondary: #adc6ff;
+    --color-on-primary-fixed-variant: #3f465c;
+    --color-surface-container-high: #1b2b3f;
+    --color-primary: #bec6e0;
+    --color-on-tertiary: #003824;
+    --color-tertiary-container: #001c10;
+    --color-outline-variant: #45464d;
+    --color-on-error-container: #ffdad6;
+    --color-on-error: #690005;
+    --color-on-surface: #d3e4fe;
+    --color-surface-container: #102034;
+    --color-on-background: #d3e4fe;
+    --color-surface-container-low: #0b1c30;
+    --color-on-tertiary-fixed: #002113;
+    --color-primary-container: #0f172a;
+    --color-secondary-fixed: #d8e2ff;
+    --color-surface-container-highest: #26364a;
+    --color-secondary-fixed-dim: #adc6ff;
+    --color-outline: #909097;
+    --color-surface-container-lowest: #000f21;
+    --color-surface-variant: #26364a;
+    --color-on-secondary-fixed: #001a42;
+    --color-background: #031427;
+    --color-error: #ffb4ab;
+    --color-surface-dim: #031427;
+    --color-on-tertiary-container: #009365;
+    --color-inverse-on-surface: #213145;
+    --color-on-primary-fixed: #131b2e;
+    --color-primary-fixed-dim: #bec6e0;
+    --color-on-secondary: #002e6a;
+    --color-on-tertiary-fixed-variant: #005236;
+    --color-inverse-primary: #565e74;
+    --color-on-surface-variant: #c6c6cd;
+    --color-on-primary-container: #798098;
+    --color-surface-bright: #2a3a4f;
+    --color-surface-tint: #bec6e0;
+    --color-primary-fixed: #dae2fd;
+    --color-inverse-surface: #d3e4fe;
+    --color-surface: #031427;
+    --color-tertiary-fixed: #6ffbbe;
+}
+
 .grid-container {
     display: grid;
     grid-template-columns: repeat(9, minmax(200px, 1fr));
