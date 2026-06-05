@@ -81,19 +81,52 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
             {/* Main Content */}
             <main className="flex-1 overflow-auto relative print:overflow-visible">
                 {/* Print Header */}
-                <div className="hidden print:block mb-8 mt-8 text-center">
-                    <h1 className="text-3xl font-bold mb-2 text-black">{title}</h1>
-                    <p className="text-black">Progreso: {Math.round(stats.passedCredits)} / {stats.totalCredits} Créditos ({Math.round(stats.percentage)}%)</p>
+                {/* Print Header */}
+                <div className="hidden print:flex justify-between items-end border-b-2 border-on-surface pb-4 mb-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-on-surface flex items-center justify-center rounded">
+                            <span className="material-symbols-outlined text-background text-3xl">school</span>
+                        </div>
+                        <div>
+                            <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">{title}</h1>
+                            <p className="font-semester-header text-on-surface-variant uppercase tracking-wider text-[10px]">Facultad de Ciencias Exactas • Plan de Estudios 2024</p>
+                        </div>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-metadata-label text-metadata-label uppercase">Créditos Totales: {Math.round(stats.passedCredits)} / {stats.totalCredits}</span>
+                        </div>
+                        <div className="w-48 h-2 border border-on-surface bg-surface-variant rounded-full overflow-hidden">
+                            <div className="h-full bg-on-surface" style={{ width: `${stats.percentage}%` }}></div>
+                        </div>
+                        <p className="font-metadata-label text-metadata-label text-on-surface-variant">Avance de Carrera: {Math.round(stats.percentage)}%</p>
+                    </div>
                 </div>
 
                 {children}
             </main>
             
             {/* Footer */}
+            {/* Footer */}
             <footer className="bg-surface-container-lowest border-t border-outline-variant w-full py-6 px-grid-margin flex flex-col md:flex-row justify-between items-center text-center md:text-left mt-auto print:hidden">
                 <p className="text-body-md font-body-md text-on-surface-variant">© 2026 Z-SH by <a href="https://github.com/Bryborj" className="text-primary hover:underline">Bryan Borges</a>. All credits and prerequisites are subject to administrative verification.</p>
                 <div className="flex gap-4 mt-4 md:mt-0">
                     <a className="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Academic Regulations</a>
+                </div>
+            </footer>
+
+            {/* Print Footer */}
+            <footer className="hidden print:flex mt-4 border-t border-outline-variant pt-2 justify-between items-center w-full max-w-[10in] mx-auto">
+                <div className="flex flex-col gap-1">
+                    <p className="font-body-md text-on-surface-variant text-[10px]">
+                        © 2026 Facultad de Ciencias Exactas. Los créditos y prerequisitos están sujetos a verificación administrativa.
+                    </p>
+                </div>
+                <div className="text-right">
+                    <p className="font-metadata-label text-on-surface-variant uppercase text-[8px]">Página 1 de 1</p>
+                    <p className="font-metadata-label text-on-surface-variant text-[8px]">
+                        Generado el: {new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                 </div>
             </footer>
         </div>

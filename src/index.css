@@ -140,11 +140,28 @@
 
 @media print {
   @page {
-    margin: 0;
+    size: US Letter landscape;
+    margin: 0.5in;
   }
 
   body {
+    background: white !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .grid-container {
+    display: flex !important;
+    width: 10in;
+    gap: 0.5rem;
+    overflow: hidden !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Make sure columns flex evenly */
+  .grid-container > div {
+    flex: 1;
+    min-width: 0;
   }
 }
