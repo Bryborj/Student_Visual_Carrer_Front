@@ -81,7 +81,6 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
             {/* Main Content */}
             <main className="flex-1 overflow-auto relative print:overflow-visible">
                 {/* Print Header */}
-                {/* Print Header */}
                 <div className="hidden print:flex justify-between items-end border-b-2 border-on-surface pb-4 mb-4">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-on-surface flex items-center justify-center rounded">
@@ -105,28 +104,10 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
 
                 {children}
             </main>
-            
-            {/* Footer */}
-            {/* Footer */}
             <footer className="bg-surface-container-lowest border-t border-outline-variant w-full py-6 px-grid-margin flex flex-col md:flex-row justify-between items-center text-center md:text-left mt-auto print:hidden">
-                <p className="text-body-md font-body-md text-on-surface-variant">© 2026 Z-SH by <a href="https://github.com/Bryborj" className="text-primary hover:underline">Bryan Borges</a>. All credits and prerequisites are subject to administrative verification.</p>
+                <p className="text-body-md font-body-md text-on-surface-variant">© {new Date().getFullYear()} Z-SH by <a href="https://github.com/Bryborj" className="text-primary hover:underline font-bold">Bryan Borges</a>. All credits and prerequisites are subject to administrative verification.</p>
                 <div className="flex gap-4 mt-4 md:mt-0">
-                    <a className="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Academic Regulations</a>
-                </div>
-            </footer>
-
-            {/* Print Footer */}
-            <footer className="hidden print:flex mt-4 border-t border-outline-variant pt-2 justify-between items-center w-full max-w-[10in] mx-auto">
-                <div className="flex flex-col gap-1">
-                    <p className="font-body-md text-on-surface-variant text-[10px]">
-                        © 2026 Facultad de Ciencias Exactas. Los créditos y prerequisitos están sujetos a verificación administrativa.
-                    </p>
-                </div>
-                <div className="text-right">
-                    <p className="font-metadata-label text-on-surface-variant uppercase text-[8px]">Página 1 de 1</p>
-                    <p className="font-metadata-label text-on-surface-variant text-[8px]">
-                        Generado el: {new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <a className="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Proyecto realizado por puro amor al arte</a>
                 </div>
             </footer>
         </div>
