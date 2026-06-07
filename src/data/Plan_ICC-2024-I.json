@@ -1,6 +1,7 @@
 {
   "faculty": "Facultad de Ciencias de la Computación",
   "career": "Ingeniería en Ciencias de la Computación",
+  "logo_url": "https://secreacademica.cs.buap.mx/images/logo-fcc.svg",
   "courses": [
     {
       "cluster": 1,
