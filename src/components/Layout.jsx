@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
+const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", faculty = "" }) => {
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -29,9 +29,15 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
             <header className="bg-background border-b border-outline-variant sticky top-0 z-50 print:hidden transition-colors duration-300">
                 <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 md:px-grid-margin py-4 max-w-container-max-width mx-auto gap-4">
                     <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 w-full md:w-auto text-center md:text-left">
-                        <h1 className="text-xl md:text-display-title font-display-title text-on-surface">
-                            {title}
-                        </h1>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 flex items-center justify-center rounded">
+                                <img src={logo_url} alt="Logo" className="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                                <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">{title}</h1>
+                                <p className="font-semester-header text-on-surface-variant uppercase tracking-wider text-[10px]">{faculty}</p>
+                            </div>
+                        </div>
                         <div className="bg-surface-container px-3 py-1 rounded-full flex items-center gap-2 border border-outline-variant w-fit mx-auto md:mx-0">
                             <span className="text-metadata-label font-metadata-label text-on-surface-variant">
                                 {Math.round(stats.passedCredits)} / {stats.totalCredits} <span className="hidden sm:inline">Créditos</span>
@@ -83,12 +89,12 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios" }) => {
                 {/* Print Header */}
                 <div className="hidden print:flex justify-between items-end border-b-2 border-on-surface pb-4 mb-4">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-on-surface flex items-center justify-center rounded">
-                            <span className="material-symbols-outlined text-background text-3xl">school</span>
+                        <div className="w-12 h-12 flex items-center justify-center rounded">
+                            <img src={logo_url} alt="Logo" className="w-full h-full object-contain" />
                         </div>
                         <div>
                             <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">{title}</h1>
-                            <p className="font-semester-header text-on-surface-variant uppercase tracking-wider text-[10px]">Facultad de Ciencias Exactas • Plan de Estudios 2024</p>
+                            <p className="font-semester-header text-on-surface-variant uppercase tracking-wider text-[10px]">{faculty}</p>
                         </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
