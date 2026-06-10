@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from './components/Layout';
 import ClusterColumn from './components/ClusterColumn';
+import VerifyEmail from './components/VerifyEmail';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
+    const [isVerified, setIsVerified] = useState(() => {
+        return localStorage.getItem('buap_verified') === 'true';
+    });
+
+    const handleVerification = (email) => {
+        localStorage.setItem('buap_verified', 'true');
+        localStorage.setItem('buap_email', email);
+        setIsVerified(true);
+    };
+
     const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
+
+    if (!isVerified) {
+        return (
+            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+                <VerifyEmail onVerified={handleVerification} />
+            </div>
+        );
+    }
 
     if (loading) {
         return (
