@@ -5,13 +5,9 @@ import VerifyEmail from './components/VerifyEmail';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
-    const [isVerified, setIsVerified] = useState(() => {
-        return localStorage.getItem('buap_verified') === 'true';
-    });
+    const [isVerified, setIsVerified] = useState(false);
 
     const handleVerification = (email) => {
-        localStorage.setItem('buap_verified', 'true');
-        localStorage.setItem('buap_email', email);
         setIsVerified(true);
     };
 
