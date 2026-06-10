@@ -1,15 +1,46 @@
-import { useState, useEffect, useMemo } from 'react';
-import planData from '../data/Plan_ICC-2024-I.json';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { normalizeData, isSubjectAvailable, getTotalPlanCredits, getPassedCredits } from '../utils/academicLogic';
 
 const STORAGE_KEY = 'academic_plan_passed_subjects';
 
 export const useStudyPlan = () => {
-    // 1. Normalize Data (Memoized to run once)
-    const { subjectsByName, unlockToName } = useMemo(() => normalizeData(planData), []);
-    const totalCredits = useMemo(() => getTotalPlanCredits(planData), []);
+    const [planData, setPlanData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // 2. State Initialization from LocalStorage
+    // 1. Fetch Data from MongoDB via API Route
+    useEffect(() => {
+        const fetchPlan = async () => {
+            try {
+                // In local dev, you may need a Vite proxy. In Vercel, this works natively.
+                const response = await fetch('/api/plan');
+                if (!response.ok) {
+                    throw new Error('No se pudo cargar el plan de estudios.');
+                }
+                const data = await response.json();
+                setPlanData(data);
+            } catch (err) {
+                console.error("Failed to fetch plan:", err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPlan();
+    }, []);
+
+    // 2. Normalize Data (Memoized)
+    const { subjectsByName, unlockToName } = useMemo(() => {
+        if (!planData) return { subjectsByName: {}, unlockToName: {} };
+        return normalizeData(planData);
+    }, [planData]);
+
+    const totalCredits = useMemo(() => {
+        if (!planData) return 0;
+        return getTotalPlanCredits(planData);
+    }, [planData]);
+
+    // 3. State Initialization from LocalStorage
     const [passedSubjects, setPassedSubjects] = useState(() => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
@@ -20,13 +51,13 @@ export const useStudyPlan = () => {
         }
     });
 
-    // 3. Persistence
+    // 4. Persistence
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(passedSubjects));
     }, [passedSubjects]);
 
-    // 4. Actions
-    const toggleSubject = (subjectName) => {
+    // 5. Actions
+    const toggleSubject = useCallback((subjectName) => {
         setPassedSubjects(prev => {
             if (prev.includes(subjectName)) {
                 return prev.filter(s => s !== subjectName);
@@ -34,39 +65,32 @@ export const useStudyPlan = () => {
                 return [...prev, subjectName];
             }
         });
-    };
+    }, []);
 
-    const resetPlan = () => {
+    const resetPlan = useCallback(() => {
         setPassedSubjects([]);
-    };
+    }, []);
 
-    // 5. Helpers
-    // Returns true if the subject is eligible to be taken (Unlocked)
-    // NOTE: If already passed, it returns false (conceptually "available to take" implies not taken yet).
-    // But for the UI, we might want to distinguish "Passed" vs "Available" vs "Locked".
-    // This function answers "Is it UNLOCKED?". It relies on `isSubjectAvailable` which returns true if reqs met and not passed.
-    // Wait, `isSubjectAvailable` in utils returns false if passed.
-    // So `isUnlocked` basically means "Ready to take".
-    // The UI needs 3 states:
-    // - PASSED (in passedSubjects)
-    // - AVAILABLE (not passed AND reqs met)
-    // - LOCKED (not passed AND reqs NOT met)
-    const getSubjectStatus = (subject) => {
+    // 6. Helpers
+    const getSubjectStatus = useCallback((subject) => {
+        if (!planData) return 'LOCKED';
         if (passedSubjects.includes(subject.subject)) return 'PASSED';
-
-        // Check requirements
         const available = isSubjectAvailable(subject, passedSubjects, subjectsByName, unlockToName, totalCredits);
         return available ? 'AVAILABLE' : 'LOCKED';
-    };
+    }, [passedSubjects, subjectsByName, unlockToName, totalCredits, planData]);
 
-    const stats = {
-        passedCredits: getPassedCredits(passedSubjects, subjectsByName),
-        totalCredits,
-        percentage: totalCredits > 0 ? (getPassedCredits(passedSubjects, subjectsByName) / totalCredits) * 100 : 0
-    };
+    const stats = useMemo(() => {
+        return {
+            passedCredits: getPassedCredits(passedSubjects, subjectsByName),
+            totalCredits,
+            percentage: totalCredits > 0 ? (getPassedCredits(passedSubjects, subjectsByName) / totalCredits) * 100 : 0
+        };
+    }, [passedSubjects, subjectsByName, totalCredits]);
 
     return {
         planData,
+        loading,
+        error,
         passedSubjects,
         toggleSubject,
         resetPlan,

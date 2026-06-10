@@ -4,7 +4,23 @@ import ClusterColumn from './components/ClusterColumn';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
-    const { planData, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
+    const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+                <div className="text-xl font-medium animate-pulse">Cargando plan de estudios...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-red-500">
+                <div className="text-xl font-medium">Error al cargar el plan: {error}</div>
+            </div>
+        );
+    }
 
     return (
         <Layout stats={stats} onReset={resetPlan} title={planData.career} logo_url={planData.logo_url} faculty={planData.faculty}>
