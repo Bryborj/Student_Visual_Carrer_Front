@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import ClusterColumn from './components/ClusterColumn';
 import VerifyEmail from './components/VerifyEmail';
@@ -6,6 +6,17 @@ import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
     const [isVerified, setIsVerified] = useState(false);
+
+    // Inicializar el tema de forma global para que las pantallas previas al Layout lo respeten
+    useEffect(() => {
+        const theme = localStorage.getItem('theme');
+        const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
 
     const handleVerification = (email) => {
         setIsVerified(true);
@@ -15,7 +26,7 @@ function App() {
 
     if (!isVerified) {
         return (
-            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+            <div className="min-h-screen bg-background">
                 <VerifyEmail onVerified={handleVerification} />
             </div>
         );
@@ -23,7 +34,7 @@ function App() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+            <div className="flex items-center justify-center min-h-screen bg-background text-on-surface">
                 <div className="text-xl font-medium animate-pulse">Cargando plan de estudios...</div>
             </div>
         );
@@ -31,7 +42,7 @@ function App() {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-red-500">
+            <div className="flex items-center justify-center min-h-screen bg-background text-error">
                 <div className="text-xl font-medium">Error al cargar el plan: {error}</div>
             </div>
         );
