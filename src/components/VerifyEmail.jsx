@@ -4,6 +4,8 @@ export default function VerifyEmail({ onVerified }) {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [saveSession, setSaveSession] = useState(false);
+    const [duration, setDuration] = useState('indefinite');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,7 +26,7 @@ export default function VerifyEmail({ onVerified }) {
             }
 
             if (data.verified) {
-                onVerified(email);
+                onVerified(email, saveSession, duration);
             }
         } catch (err) {
             setError(err.message);
@@ -57,6 +59,41 @@ export default function VerifyEmail({ onVerified }) {
                             className="w-full px-4 py-2 border border-outline rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-lowest text-on-surface transition-colors placeholder:text-outline"
                             required
                         />
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <label className="flex items-center space-x-2 text-sm text-on-surface-variant cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={saveSession}
+                                onChange={(e) => setSaveSession(e.target.checked)}
+                                className="w-4 h-4 rounded border-outline text-primary focus:ring-primary focus:ring-2 bg-surface-container-lowest"
+                            />
+                            <span>Guardar inicio de sesión</span>
+                        </label>
+
+                        {saveSession && (
+                            <div className="pl-6 animate-fade-in">
+                                <label htmlFor="duration" className="block text-xs font-medium text-on-surface-variant mb-1">
+                                    Duración de la sesión
+                                </label>
+                                <select
+                                    id="duration"
+                                    value={duration}
+                                    onChange={(e) => setDuration(e.target.value)}
+                                    className="w-full px-3 py-1.5 text-sm border border-outline rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-lowest text-on-surface transition-colors"
+                                >
+                                    <option value="indefinite">Tiempo indefinido</option>
+                                    <option value="1">1 día</option>
+                                    <option value="7">7 días</option>
+                                    <option value="30">30 días</option>
+                                </select>
+                            </div>
+                        )}
+                        
+                        <p className="text-xs text-on-surface-variant/70 italic">
+                            Aviso: Al continuar, aceptas el uso de cookies y almacenamiento local para gestionar tu acceso.
+                        </p>
                     </div>
                     
                     {error && (

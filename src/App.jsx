@@ -7,7 +7,7 @@ import { useStudyPlan } from './hooks/useStudyPlan';
 function App() {
     const [isVerified, setIsVerified] = useState(false);
 
-    // Inicializar el tema de forma global para que las pantallas previas al Layout lo respeten
+    // Inicializar el tema de forma global y verificar sesión guardada
     useEffect(() => {
         const theme = localStorage.getItem('theme');
         const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -16,10 +16,50 @@ function App() {
         } else {
             document.documentElement.classList.remove('dark');
         }
+
+        // Verificar sesión guardada
+        const storedSession = localStorage.getItem('auth_session') || sessionStorage.getItem('auth_session');
+        if (storedSession) {
+            try {
+                const data = JSON.parse(storedSession);
+                if (data.expiresAt === 'indefinite' || (data.expiresAt && Date.now() < data.expiresAt)) {
+                    setIsVerified(true);
+                } else {
+                    // Limpiar si expiró
+                    localStorage.removeItem('auth_session');
+                    sessionStorage.removeItem('auth_session');
+                }
+            } catch (e) {
+                console.error("Error parsing session data", e);
+            }
+        }
     }, []);
 
-    const handleVerification = (email) => {
+    const handleVerification = (email, saveSession, duration) => {
         setIsVerified(true);
+
+        const sessionData = {
+            email,
+            verifiedAt: Date.now()
+        };
+
+        if (saveSession) {
+            if (duration === 'indefinite') {
+                sessionData.expiresAt = 'indefinite';
+            } else {
+                const days = parseInt(duration, 10);
+                if (!isNaN(days)) {
+                    sessionData.expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+                } else {
+                    sessionData.expiresAt = 'indefinite';
+                }
+            }
+            localStorage.setItem('auth_session', JSON.stringify(sessionData));
+        } else {
+            // Guardar solo por la sesión (hasta cerrar la pestaña/navegador)
+            sessionData.expiresAt = 'session';
+            sessionStorage.setItem('auth_session', JSON.stringify(sessionData));
+        }
     };
 
     const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
