@@ -3,11 +3,37 @@ import Layout from './components/Layout';
 import ClusterColumn from './components/ClusterColumn';
 import VerifyEmail from './components/VerifyEmail';
 import AdminDashboard from './components/AdminDashboard';
+import PlanSelector from './components/PlanSelector';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
     const [isVerified, setIsVerified] = useState(false);
     const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash === '#admin');
+    
+    const [availablePlans, setAvailablePlans] = useState([]);
+    const [selectedPlanConfig, setSelectedPlanConfig] = useState(null);
+
+    // Fetch available plans list
+    useEffect(() => {
+        const fetchPlansList = async () => {
+            try {
+                const res = await fetch('/api/plans-list');
+                if (res.ok) {
+                    const data = await res.json();
+                    setAvailablePlans(data);
+                    
+                    // Set default plan to ICC if available, else first one
+                    const defaultPlan = data.find(p => p.career === "Ingeniería en Ciencias de la Computación") || data[0];
+                    if (defaultPlan) {
+                        setSelectedPlanConfig(defaultPlan);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load plans list", err);
+            }
+        };
+        fetchPlansList();
+    }, []);
 
     // Inicializar el tema de forma global y verificar sesión guardada
     useEffect(() => {
@@ -68,7 +94,7 @@ function App() {
         }
     };
 
-    const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
+    const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan(selectedPlanConfig?.career, selectedPlanConfig?.modalidad);
 
     if (isAdminRoute) {
         return <AdminDashboard />;
@@ -98,8 +124,22 @@ function App() {
         );
     }
 
+    const headerControls = (
+        <PlanSelector 
+            availablePlans={availablePlans} 
+            selected={selectedPlanConfig} 
+            onChange={setSelectedPlanConfig} 
+        />
+    );
+
     return (
-        <Layout stats={stats} onReset={resetPlan} title={planData.career} logo_url={planData.logo_url} faculty={planData.faculty}>
+        <Layout 
+            stats={stats} 
+            onReset={resetPlan} 
+            title={planData.career} 
+            logo_url={planData.logo_url} 
+            headerControls={headerControls}
+        >
             <div className="grid-container px-4 md:px-grid-margin py-4 md:py-8 max-w-container-max-width mx-auto gap-0 print:p-0">
                 {planData.courses.map(cluster => (
                     <ClusterColumn

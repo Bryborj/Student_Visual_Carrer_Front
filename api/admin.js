@@ -70,8 +70,8 @@ export default async function handler(req, res) {
       
       // Upsert usando career y modalidad como identificador único
       const query = { career: payload.career };
-      if (payload.modalidad) {
-          query.modalidad = payload.modalidad;
+      if (payload.mode) {
+          query.mode = payload.mode;
       }
 
       await db.collection('plans').updateOne(

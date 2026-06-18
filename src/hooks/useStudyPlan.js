@@ -1,19 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { normalizeData, isSubjectAvailable, getTotalPlanCredits, getPassedCredits } from '../utils/academicLogic';
 
-const STORAGE_KEY = 'academic_plan_passed_subjects';
-
-export const useStudyPlan = () => {
+export const useStudyPlan = (career, modalidad) => {
     const [planData, setPlanData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // 1. Fetch Data from MongoDB via API Route
     useEffect(() => {
+        if (!career) return;
         const fetchPlan = async () => {
+            setLoading(true);
             try {
                 // In local dev, you may need a Vite proxy. In Vercel, this works natively.
-                const response = await fetch('/api/plan');
+                let url = `/api/plan?career=${encodeURIComponent(career)}`;
+                if (modalidad) url += `&modalidad=${encodeURIComponent(modalidad)}`;
+                const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error('No se pudo cargar el plan de estudios.');
                 }
@@ -27,7 +29,7 @@ export const useStudyPlan = () => {
             }
         };
         fetchPlan();
-    }, []);
+    }, [career, modalidad]);
 
     // 2. Normalize Data (Memoized)
     const { subjectsByName, unlockToName } = useMemo(() => {
@@ -41,6 +43,7 @@ export const useStudyPlan = () => {
     }, [planData]);
 
     // 3. State Initialization from LocalStorage
+    const STORAGE_KEY = `academic_plan_passed_subjects_${career}_${modalidad || 'default'}`;
     const [passedSubjects, setPassedSubjects] = useState(() => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
@@ -51,10 +54,20 @@ export const useStudyPlan = () => {
         }
     });
 
+    // Reset passedSubjects state when career/modalidad changes
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            setPassedSubjects(stored ? JSON.parse(stored) : []);
+        } catch(e) {
+            setPassedSubjects([]);
+        }
+    }, [STORAGE_KEY]);
+
     // 4. Persistence
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(passedSubjects));
-    }, [passedSubjects]);
+    }, [passedSubjects, STORAGE_KEY]);
 
     // 5. Actions
     const toggleSubject = useCallback((subjectName) => {

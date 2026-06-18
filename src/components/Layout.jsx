@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", faculty = "" }) => {
+const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null }) => {
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -33,9 +33,9 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
                             <div className="w-12 h-12 flex items-center justify-center rounded">
                                 <img src={logo_url} alt="Logo" className="w-full h-full object-contain" />
                             </div>
-                            <div>
+                            <div className="flex flex-col items-start w-full max-w-xs sm:max-w-md">
                                 <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">{title}</h1>
-                                <p className="font-semester-header text-on-surface-variant uppercase tracking-wider text-[10px]">{faculty}</p>
+                                {headerControls}
                             </div>
                         </div>
                         <div className="bg-surface-container px-3 py-1 rounded-full flex items-center gap-2 border border-outline-variant w-fit mx-auto md:mx-0">
@@ -94,7 +94,7 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
                         </div>
                         <div>
                             <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">{title}</h1>
-                            <p className="font-semester-header text-on-surface-variant uppercase tracking-wider text-[10px]">{faculty}</p>
+                            {headerControls}
                         </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
