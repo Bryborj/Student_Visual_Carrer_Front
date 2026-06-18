@@ -2,13 +2,19 @@ import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import ClusterColumn from './components/ClusterColumn';
 import VerifyEmail from './components/VerifyEmail';
+import AdminDashboard from './components/AdminDashboard';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
     const [isVerified, setIsVerified] = useState(false);
+    const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash === '#admin');
 
     // Inicializar el tema de forma global y verificar sesión guardada
     useEffect(() => {
+        const handleHashChange = () => {
+            setIsAdminRoute(window.location.hash === '#admin');
+        };
+        window.addEventListener('hashchange', handleHashChange);
         const theme = localStorage.getItem('theme');
         const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (isDark) {
@@ -63,6 +69,10 @@ function App() {
     };
 
     const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan();
+
+    if (isAdminRoute) {
+        return <AdminDashboard />;
+    }
 
     if (!isVerified) {
         return (
