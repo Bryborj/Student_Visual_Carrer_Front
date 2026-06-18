@@ -125,7 +125,8 @@ function AdminDashboard() {
                 <div className="bg-surface p-6 rounded-2xl shadow-sm border border-primary/10">
                     <h2 className="text-xl font-bold text-on-surface mb-4">Agregar / Actualizar Plan de Estudios</h2>
                     <p className="text-on-surface/70 mb-6 text-sm">
-                        Pega el objeto JSON completo del plan de estudios. Debe contener al menos <code className="bg-background px-1 py-0.5 rounded">career</code> y <code className="bg-background px-1 py-0.5 rounded">courses</code>. Si la carrera ya existe, se actualizará.
+                        Pega el objeto JSON completo del plan de estudios. Debe contener al menos <code className="bg-background px-1 py-0.5 rounded">career</code>, <code className="bg-background px-1 py-0.5 rounded">faculty</code> y <code className="bg-background px-1 py-0.5 rounded">courses</code>. 
+                        <strong> Nota:</strong> La base de datos ahora es relacional. El backend automáticamente buscará o creará la <code>Facultad</code> usando el nombre y enlazará su ID al plan. También puedes incluir <code className="bg-background px-1 py-0.5 rounded">modalidad</code> (ej. Línea, Presencial).
                     </p>
 
                     <form onSubmit={handleAddPlan} className="space-y-4">
@@ -134,7 +135,7 @@ function AdminDashboard() {
                                 value={jsonInput}
                                 onChange={(e) => setJsonInput(e.target.value)}
                                 className="w-full h-96 px-4 py-3 rounded-xl bg-background border border-primary/20 text-on-surface font-mono text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                                placeholder='{\n  "career": "Ingeniería en Software",\n  "faculty": "Facultad de Ciencias de la Computación",\n  "courses": [\n    ...\n  ]\n}'
+                                placeholder='{\n  "career": "Ingeniería en Software",\n  "modalidad": "Línea",\n  "faculty": "Facultad de Ciencias de la Computación",\n  "logo_url": "...",\n  "courses": [\n    ...\n  ]\n}'
                                 required
                             />
                         </div>

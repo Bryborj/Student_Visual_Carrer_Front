@@ -24,12 +24,41 @@ export default async function handler(req, res) {
 
   try {
     const { db } = await connectToDatabase(uri);
-    // Hardcoded to fetch the current career plan. Can be made dynamic via query params later.
-    const plan = await db.collection('plans').findOne({ career: "Ingeniería en Ciencias de la Computación" });
+    
+    // Obtener parámetros de búsqueda (opcionales)
+    const careerQuery = req.query.career || "Ingeniería en Ciencias de la Computación";
+    const modalidadQuery = req.query.modalidad;
+    
+    const matchStage = { career: careerQuery };
+    if (modalidadQuery) {
+        matchStage.modalidad = modalidadQuery;
+    }
 
-    if (!plan) {
+    const planData = await db.collection('plans').aggregate([
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "faculties",
+          localField: "facultyId",
+          foreignField: "_id",
+          as: "facultyData"
+        }
+      }
+    ]).toArray();
+
+    if (!planData || planData.length === 0) {
       return res.status(404).json({ message: "Plan not found" });
     }
+
+    const plan = planData[0];
+    
+    // Reconstruir el objeto para el frontend
+    if (plan.facultyData && plan.facultyData.length > 0) {
+      plan.faculty = plan.facultyData[0].name;
+      plan.logo_url = plan.facultyData[0].logo_url;
+    }
+    delete plan.facultyData;
+    delete plan.facultyId;
 
     res.status(200).json(plan);
   } catch (error) {

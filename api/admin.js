@@ -45,9 +45,37 @@ export default async function handler(req, res) {
          return res.status(400).json({ error: 'El plan debe contener career y courses.' });
       }
       
-      // Upsert (actualizar si existe, insertar si no)
+      // Normalizar la facultad
+      if (payload.faculty) {
+        let facultyRecord = await db.collection('faculties').findOne({ name: payload.faculty });
+        if (!facultyRecord) {
+            const result = await db.collection('faculties').insertOne({ 
+                name: payload.faculty, 
+                logo_url: payload.logo_url || '' 
+            });
+            payload.facultyId = result.insertedId;
+        } else {
+            payload.facultyId = facultyRecord._id;
+            // Si mandan un logo nuevo, lo actualizamos (opcional)
+            if (payload.logo_url && payload.logo_url !== facultyRecord.logo_url) {
+                await db.collection('faculties').updateOne(
+                    { _id: facultyRecord._id },
+                    { $set: { logo_url: payload.logo_url } }
+                );
+            }
+        }
+        delete payload.faculty;
+        delete payload.logo_url;
+      }
+      
+      // Upsert usando career y modalidad como identificador único
+      const query = { career: payload.career };
+      if (payload.modalidad) {
+          query.modalidad = payload.modalidad;
+      }
+
       await db.collection('plans').updateOne(
-        { career: payload.career },
+        query,
         { $set: payload },
         { upsert: true }
       );
