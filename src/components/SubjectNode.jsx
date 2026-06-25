@@ -26,20 +26,20 @@ const SubjectNode = ({ subject, status, onToggle }) => {
 
     return (
         <div
-            className={`border-l-4 ${areaClass} rounded border flex flex-col p-card-padding h-32 ${currentStatus} print:h-auto print:min-h-[70px] print:bg-white print:border-outline-variant print:border-l-4 print:text-black print:opacity-100 print:shadow-none print:p-1`}
+            className={`border-l-4 ${areaClass} rounded border flex flex-col p-card-padding h-32 ${currentStatus} print:h-auto print:min-h-[70px] print:border-outline-variant print:border-l-4 print:opacity-100 print:shadow-none print:p-1`}
             onClick={() => status !== 'LOCKED' && onToggle(name)}
             title={status === 'LOCKED' ? 'Prerrequisitos pendientes' : 'Click para alternar estado'}
         >
             <div className="flex justify-between items-start mb-2 print:mb-0">
-                <span className={`text-metadata-label font-metadata-label ${color} print:text-[8px] print:text-black print:bg-surface-container print:px-1 print:rounded print:border print:border-outline-variant`}>
+                <span className={`text-metadata-label font-metadata-label ${color} print:text-[8px] print:bg-surface-container print:px-1 print:rounded print:border print:border-outline-variant`}>
                     {credits} CR
                 </span>
-                <span className={`material-symbols-outlined text-[14px] ${color} print:text-[10px] print:text-outline`}>
+                <span className={`material-symbols-outlined text-[14px] ${color} print:text-[10px]`}>
                     {icon}
                 </span>
             </div>
             
-            <h3 className={`text-course-title font-course-title mb-4 ${status === 'PASSED' || status === 'AVAILABLE' ? 'text-on-surface' : 'text-on-surface-variant'} print:text-[9px] print:leading-tight print:mb-1 print:text-black`}>
+            <h3 className={`text-course-title font-course-title mb-4 ${status === 'PASSED' || status === 'AVAILABLE' ? 'text-on-surface' : 'text-on-surface-variant'} print:text-[9px] print:leading-tight print:mb-1`}>
                 {name}
             </h3>
             

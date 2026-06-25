@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { version } from 'react';
 
 const UPDATES = [
+    {
+        version: "v1.1.1",
+        date: "25 de Junio, 2026",
+        title: "Mejoras de calidad de vida y errores menores",
+        changes: [
+            "▪️ Se ha mejorado la legibilidad de las materias en la versión impresa.",
+            "▪️ Se ha mejorado la experiencia de usuario."
+        ]
+    },
     {
         version: "v1.1.0",
         date: "24 de Junio, 2026",
