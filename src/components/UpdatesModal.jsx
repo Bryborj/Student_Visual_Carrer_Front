@@ -7,7 +7,8 @@ const UPDATES = [
         title: "Mejoras de calidad de vida y errores menores",
         changes: [
             "▪️ Se ha mejorado la legibilidad de las materias en la versión impresa.",
-            "▪️ Se ha mejorado la experiencia de usuario."
+            "▪️ Se ha mejorado la experiencia de usuario.",
+            "▪️ Eh agregado la carrera de Ingeniería en Ciencias de Datos."
         ]
     },
     {
