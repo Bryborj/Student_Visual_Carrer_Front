@@ -6,10 +6,10 @@ const UPDATES = [
         date: "24 de Junio, 2026",
         title: "Nuevo selector de carreras y rediseño",
         changes: [
-            "✨ Se ha implementado un nuevo modal interactivo para elegir tu Facultad, Carrera y Modalidad.",
-            "🎨 Rediseño del selector para que sea mucho más estético y claro.",
-            "🛠️ Se añadió un botón en la barra superior (el icono de birrete) para cambiar de carrera en cualquier momento sin perder tu progreso de la sesión.",
-            "🚀 Soporte para la selección de modalidad (Ej. Presencial, En Línea)."
+            "▪️ Se ha implementado un nuevo modal interactivo para elegir tu Facultad, Carrera y Modalidad.",
+            "▪️ Rediseño del selector para que sea mucho más estético y claro.",
+            "▪️ Se añadió un botón en la barra superior (el icono de birrete) para cambiar de carrera en cualquier momento sin perder tu progreso de la sesión.",
+            "▪️ Soporte para la selección de modalidad (Ej. Presencial, En Línea)."
         ]
     },
     {
@@ -17,9 +17,9 @@ const UPDATES = [
         date: "18 de Junio, 2026",
         title: "Mejoras de Autenticación y Bases de Datos",
         changes: [
-            "🔐 Integración con validación de correo institucional para mantener el acceso seguro.",
-            "💾 Ahora puedes decidir cuánto tiempo quieres mantener abierta tu sesión (1 día, 7 días o indefinidamente).",
-            "🗄️ Migración de los planes de estudio a nuestra nueva base de datos para una carga más rápida."
+            "▪️ Integración con validación de correo institucional para mantener el acceso seguro.",
+            "▪️ Ahora puedes decidir cuánto tiempo quieres mantener abierta tu sesión (1 día, 7 días o indefinidamente).",
+            "▪️ Migración de los planes de estudio a nuestra nueva base de datos para una carga más rápida."
         ]
     }
 ];
