@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null }) => {
+const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null, onOpenPlanSelector, onOpenUpdates }) => {
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -52,6 +52,27 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
                     </div>
 
                     <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto">
+                        {onOpenUpdates && (
+                            <button
+                                onClick={onOpenUpdates}
+                                aria-label="Novedades"
+                                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
+                                title="Novedades y Actualizaciones"
+                            >
+                                <span className="material-symbols-outlined text-[#10b981]">campaign</span>
+                            </button>
+                        )}
+                        {onOpenPlanSelector && (
+                            <button
+                                onClick={onOpenPlanSelector}
+                                aria-label="Cambiar Carrera"
+                                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
+                                title="Cambiar Carrera"
+                            >
+                                <span className="material-symbols-outlined text-primary">school</span>
+                            </button>
+                        )}
+
                         <button
                             onClick={onReset}
                             aria-label="Reiniciar"
