@@ -4,6 +4,7 @@ import ClusterColumn from './components/ClusterColumn';
 import VerifyEmail from './components/VerifyEmail';
 import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
+import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
@@ -11,7 +12,21 @@ function App() {
     const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash === '#admin');
     
     const [availablePlans, setAvailablePlans] = useState([]);
-    const [selectedPlanConfig, setSelectedPlanConfig] = useState(null);
+    const [selectedPlanConfig, setSelectedPlanConfigState] = useState(null);
+    const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+    const [isUpdatesModalOpen, setIsUpdatesModalOpen] = useState(false);
+
+    const handleCloseUpdates = () => {
+        setIsUpdatesModalOpen(false);
+        localStorage.setItem('last_seen_version', CURRENT_VERSION);
+    };
+
+    const setSelectedPlanConfig = (config) => {
+        setSelectedPlanConfigState(config);
+        if (config) {
+            localStorage.setItem('selected_plan_config', JSON.stringify(config));
+        }
+    };
 
     // Fetch available plans list
     useEffect(() => {
@@ -22,10 +37,40 @@ function App() {
                     const data = await res.json();
                     setAvailablePlans(data);
                     
-                    // Set default plan to ICC if available, else first one
-                    const defaultPlan = data.find(p => p.career === "Ingeniería en Ciencias de la Computación") || data[0];
-                    if (defaultPlan) {
-                        setSelectedPlanConfig(defaultPlan);
+                    // Try to load from localStorage first
+                    const savedPlan = localStorage.getItem('selected_plan_config');
+                    if (savedPlan) {
+                        try {
+                            const parsed = JSON.parse(savedPlan);
+                            // Validate that it exists in the fetched plans
+                            const exists = data.find(p => p.career === parsed.career && p.faculty === parsed.faculty && p.modalidad === parsed.modalidad);
+                            if (exists) {
+                                setSelectedPlanConfigState(parsed);
+                                
+                                // Check for updates for returning users
+                                const lastSeen = localStorage.getItem('last_seen_version');
+                                if (lastSeen !== CURRENT_VERSION) {
+                                    setIsUpdatesModalOpen(true);
+                                }
+                            } else {
+                                throw new Error("Saved plan not found in current data");
+                            }
+                        } catch (e) {
+                            const defaultPlan = data.find(p => p.career === "Ingeniería en Ciencias de la Computación") || data[0];
+                            if (defaultPlan) {
+                                setSelectedPlanConfig(defaultPlan);
+                                setIsPlanModalOpen(true);
+                            }
+                        }
+                    } else {
+                        // Set default plan and open modal on first visit
+                        const defaultPlan = data.find(p => p.career === "Ingeniería en Ciencias de la Computación") || data[0];
+                        if (defaultPlan) {
+                            setSelectedPlanConfig(defaultPlan);
+                            setIsPlanModalOpen(true);
+                        }
+                        // Mark current version as seen so they don't see updates on their first visit
+                        localStorage.setItem('last_seen_version', CURRENT_VERSION);
                     }
                 }
             } catch (err) {
@@ -124,13 +169,6 @@ function App() {
         );
     }
 
-    const headerControls = (
-        <PlanSelector 
-            availablePlans={availablePlans} 
-            selected={selectedPlanConfig} 
-            onChange={setSelectedPlanConfig} 
-        />
-    );
 
     return (
         <Layout 
@@ -138,8 +176,20 @@ function App() {
             onReset={resetPlan} 
             title={planData.career} 
             logo_url={planData.logo_url} 
-            headerControls={headerControls}
+            onOpenPlanSelector={() => setIsPlanModalOpen(true)}
+            onOpenUpdates={() => setIsUpdatesModalOpen(true)}
         >
+            <UpdatesModal 
+                isOpen={isUpdatesModalOpen} 
+                onClose={handleCloseUpdates} 
+            />
+            <PlanSelector 
+                isOpen={isPlanModalOpen}
+                onClose={() => setIsPlanModalOpen(false)}
+                availablePlans={availablePlans} 
+                selected={selectedPlanConfig} 
+                onChange={setSelectedPlanConfig} 
+            />
             <div className="grid-container px-4 md:px-grid-margin py-4 md:py-8 max-w-container-max-width mx-auto gap-0 print:p-0">
                 {planData.courses.map(cluster => (
                     <ClusterColumn
