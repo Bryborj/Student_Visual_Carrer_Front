@@ -8,7 +8,8 @@ const UPDATES = [
         changes: [
             "▪️ Se ha mejorado la legibilidad de las materias en la versión impresa.",
             "▪️ Se ha mejorado la experiencia de usuario.",
-            "▪️ Eh agregado la carrera de Ingeniería en Ciencias de Datos."
+            "▪️ Eh agregado la carrera de Ingeniería en Ciencias de Datos.",
+            "▪️ Trabajamos en agregar una mejor experiencia para el usuario."
         ]
     },
     {
