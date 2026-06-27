@@ -144,9 +144,16 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
       const data = await res.json();
       if (res.ok) {
         setPinSent(true);
-        setAuthSuccess('Código PIN enviado correctamente.');
-        if (data.devPin) {
-          setDevPinAlert(data.devPin);
+        if (data.emailSent) {
+          setAuthSuccess('📧 ¡Código PIN enviado! Revisa la bandeja de entrada o spam de tu correo institucional.');
+          setDevPinAlert('');
+        } else {
+          setAuthSuccess('Código PIN generado.');
+          if (data.brevoError && data.devPin) {
+            setDevPinAlert(`${data.devPin} | Razón: ${data.brevoError}`);
+          } else if (data.devPin) {
+            setDevPinAlert(data.devPin);
+          }
         }
       } else {
         setAuthError(data.error || 'Error al enviar PIN.');
@@ -447,12 +454,17 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
               )}
 
               {devPinAlert && (
-                <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs flex flex-col gap-1">
+                <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs flex flex-col gap-1.5">
                   <span className="font-bold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">bolt</span>
                     Modo Gratuito / Pruebas Activo:
                   </span>
-                  <span>Tu PIN de verificación temporal es: <strong className="text-sm tracking-wider bg-amber-500/20 px-2 py-0.5 rounded text-amber-200">{devPinAlert}</strong></span>
+                  <span>Tu PIN de verificación temporal es: <strong className="text-sm tracking-wider bg-amber-500/20 px-2 py-0.5 rounded text-amber-200">{devPinAlert.split(' | Razón: ')[0]}</strong></span>
+                  {devPinAlert.includes(' | Razón: ') && (
+                    <div className="mt-1 p-2 rounded bg-red-950/60 border border-red-500/40 text-red-200 text-[11px] font-mono leading-relaxed">
+                      <strong>⚠️ Detalle de Brevo API:</strong> {devPinAlert.split(' | Razón: ')[1]}
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -1,5 +1,16 @@
 [
   {
+    "version": "v1.2.1",
+    "date": "27 de Junio, 2026",
+    "title": "Integración de Correo Brevo y Blindaje en Producción",
+    "changes": [
+      "▪️ Integración con la API transaccional de Brevo para el envío automatizado de códigos PIN al correo institucional de la BUAP.",
+      "▪️ Implementación de Modo Estricto de Seguridad en producción: se desactiva de forma automática el PIN temporal de prueba en entornos en vivo para garantizar la autenticidad institucional.",
+      "▪️ Mejora en el modal de verificación para reportar diagnósticos precisos en tiempo real sobre el estado de entrega del correo.",
+      "▪️ Blindaje de la respuesta del servidor para evitar la exposición de credenciales o códigos temporales en la red."
+    ]
+  },
+  {
     "version": "v1.2.0",
     "date": "27 de Junio, 2026",
     "title": "Foro Comunidad BUAP, Autenticación Segura y TypeScript",
