@@ -5,6 +5,7 @@ import VerifyEmail from './components/VerifyEmail';
 import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
 import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal';
+import { ForumModal } from './components/ForumModal';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
     const [selectedPlanConfig, setSelectedPlanConfigState] = useState(null);
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
     const [isUpdatesModalOpen, setIsUpdatesModalOpen] = useState(false);
+    const [isForumModalOpen, setIsForumModalOpen] = useState(false);
 
     const handleCloseUpdates = () => {
         setIsUpdatesModalOpen(false);
@@ -178,10 +180,16 @@ function App() {
             logo_url={planData.logo_url} 
             onOpenPlanSelector={() => setIsPlanModalOpen(true)}
             onOpenUpdates={() => setIsUpdatesModalOpen(true)}
+            onOpenForum={() => setIsForumModalOpen(true)}
         >
             <UpdatesModal 
                 isOpen={isUpdatesModalOpen} 
                 onClose={handleCloseUpdates} 
+            />
+            <ForumModal
+                isOpen={isForumModalOpen}
+                onClose={() => setIsForumModalOpen(false)}
+                currentCareer={planData.career}
             />
             <PlanSelector 
                 isOpen={isPlanModalOpen}

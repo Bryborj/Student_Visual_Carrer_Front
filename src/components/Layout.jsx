@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null, onOpenPlanSelector, onOpenUpdates }) => {
+const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null, onOpenPlanSelector, onOpenUpdates, onOpenForum }) => {
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -52,6 +52,20 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
                     </div>
 
                     <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto">
+                        {onOpenForum && (
+                            <button
+                                onClick={onOpenForum}
+                                aria-label="Foro Comunidad BUAP"
+                                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80 relative group"
+                                title="Foro Comunidad BUAP"
+                            >
+                                <span className="material-symbols-outlined text-purple-400">forum</span>
+                                <span className="absolute top-1 right-1 flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                                </span>
+                            </button>
+                        )}
                         {onOpenUpdates && (
                             <button
                                 onClick={onOpenUpdates}

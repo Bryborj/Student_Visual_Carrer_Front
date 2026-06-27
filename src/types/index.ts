@@ -38,3 +38,26 @@ export interface StudyPlanStats {
   totalCredits: number;
   percentage: number;
 }
+
+export interface ForumComment {
+  id: string;
+  author: string;
+  authorEmail?: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ForumPost {
+  _id?: string;
+  title: string;
+  content: string;
+  category: string;
+  career: string;
+  author: string;
+  authorEmail?: string;
+  likes: number;
+  likedBy?: string[];
+  comments: ForumComment[];
+  createdAt: string;
+}
+

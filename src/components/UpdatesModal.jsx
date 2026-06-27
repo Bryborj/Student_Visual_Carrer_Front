@@ -4,9 +4,10 @@ const UPDATES = [
     {
         version: "v1.2.0",
         date: "27 de Junio, 2026",
-        title: "Rediseño completo y nuevas funcionalidades",
+        title: "Rediseño completo y Foro Comunidad BUAP",
         changes: [
-            "▪️ Imprementacion de TypeScript"
+            "▪️ Implementación de TypeScript para mayor estabilidad.",
+            "▪️ Nuevo Foro Comunidad BUAP para discutir materias, profesores y proyectos con tu correo institucional verificado 🐺."
         ]
     },
     {
