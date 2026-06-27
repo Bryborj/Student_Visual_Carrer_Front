@@ -1,5 +1,14 @@
 [
   {
+    "version": "v1.2.2",
+    "date": "27 de Junio, 2026",
+    "title": "Mejoras en el flujo de registro y errores menores",
+    "changes": [
+      "▪️ Se ha mejorado el flujo de registro en el foro.",
+      "▪️ Se han corregido errores menores."
+    ]
+  },
+  {
     "version": "v1.2.1",
     "date": "27 de Junio, 2026",
     "title": "Integración de Correo Brevo y Blindaje en Producción",

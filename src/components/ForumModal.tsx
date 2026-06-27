@@ -170,6 +170,11 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
     setAuthError('');
     setAuthSuccess('');
 
+    if (!pinSent) {
+      handleSendPin(e);
+      return;
+    }
+
     if (!regEmail || !regPin || !regUsername || !regPassword) {
       setAuthError('Todos los campos son obligatorios.');
       return;
