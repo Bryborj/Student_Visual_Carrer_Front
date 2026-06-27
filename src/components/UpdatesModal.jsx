@@ -2,6 +2,14 @@ import React, { version } from 'react';
 
 const UPDATES = [
     {
+        version: "v1.2.0",
+        date: "27 de Junio, 2026",
+        title: "Rediseño completo y nuevas funcionalidades",
+        changes: [
+            "▪️ Imprementacion de TypeScript"
+        ]
+    },
+    {
         version: "v1.1.1",
         date: "25 de Junio, 2026",
         title: "Mejoras de calidad de vida y errores menores",
