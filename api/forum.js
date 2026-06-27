@@ -39,13 +39,11 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { action, postId, title, content, category, authorEmail, career, commentContent } = req.body;
+      const { action, postId, title, content, category, username, emailHash, career, commentContent } = req.body;
 
-      if (!authorEmail) {
-        return res.status(401).json({ error: 'Se requiere correo institucional BUAP para participar.' });
+      if (!username || !emailHash) {
+        return res.status(401).json({ error: 'Debes iniciar sesión en el foro para participar.' });
       }
-
-      const username = authorEmail.split('@')[0];
 
       if (action === 'create_post') {
         if (!title || !content || !category) {
@@ -58,9 +56,9 @@ export default async function handler(req, res) {
           category,
           career: career || 'General',
           author: username,
-          authorEmail,
+          emailHash, // Solo guardamos el hash del correo institucional para verificar identidad/unidad
           likes: 0,
-          likedBy: [],
+          likedBy: [], // Guardará los emailHash de quienes dan like
           comments: [],
           createdAt: new Date().toISOString()
         };
@@ -76,10 +74,10 @@ export default async function handler(req, res) {
         if (!post) return res.status(404).json({ error: 'Post no encontrado.' });
 
         const likedBy = post.likedBy || [];
-        const hasLiked = likedBy.includes(authorEmail);
+        const hasLiked = likedBy.includes(emailHash);
         const update = hasLiked
-          ? { $inc: { likes: -1 }, $pull: { likedBy: authorEmail } }
-          : { $inc: { likes: 1 }, $addToSet: { likedBy: authorEmail } };
+          ? { $inc: { likes: -1 }, $pull: { likedBy: emailHash } }
+          : { $inc: { likes: 1 }, $addToSet: { likedBy: emailHash } };
 
         await collection.updateOne({ _id: new ObjectId(postId) }, update);
         const updatedPost = await collection.findOne({ _id: new ObjectId(postId) });
@@ -91,7 +89,7 @@ export default async function handler(req, res) {
         const newComment = {
           id: new ObjectId().toString(),
           author: username,
-          authorEmail,
+          emailHash,
           content: commentContent,
           createdAt: new Date().toISOString()
         };

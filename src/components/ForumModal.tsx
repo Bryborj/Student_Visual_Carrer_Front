@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ForumPost } from '../types';
+import { ForumPost, ForumUser } from '../types';
 
 interface ForumModalProps {
   isOpen: boolean;
@@ -23,14 +23,14 @@ const MOCK_POSTS: ForumPost[] = [
     category: '👨‍🏫 Materias & Profesores',
     career: 'Ingeniería en Ciencias de la Computación',
     author: 'lobito.buap',
-    authorEmail: 'lobito.buap@alumno.buap.mx',
+    emailHash: 'mock-hash-1',
     likes: 12,
     likedBy: [],
     comments: [
       {
         id: 'c1',
         author: 'ana.sofia',
-        authorEmail: 'ana.sofia@alumno.buap.mx',
+        emailHash: 'mock-hash-2',
         content: 'Te recomiendo mucho repasar punteros y árboles antes de iniciar, ¡hace toda la diferencia!',
         createdAt: '2026-06-26T14:30:00Z'
       }
@@ -44,7 +44,7 @@ const MOCK_POSTS: ForumPost[] = [
     category: '🚀 Proyectos & Colaboración',
     career: 'Ingeniería en Ciencias de la Computación',
     author: 'carlos.dev',
-    authorEmail: 'carlos.dev@alumno.buap.mx',
+    emailHash: 'mock-hash-3',
     likes: 8,
     likedBy: [],
     comments: [],
@@ -58,6 +58,35 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
+  // User Session State
+  const [forumUser, setForumUser] = useState<ForumUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('forum_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Auth View State
+  const [showAuthView, setShowAuthView] = useState<boolean>(false);
+  const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
+  const [authError, setAuthError] = useState<string>('');
+  const [authSuccess, setAuthSuccess] = useState<string>('');
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+
+  // Register form fields
+  const [regEmail, setRegEmail] = useState<string>('');
+  const [regPin, setRegPin] = useState<string>('');
+  const [regUsername, setRegUsername] = useState<string>('');
+  const [regPassword, setRegPassword] = useState<string>('');
+  const [pinSent, setPinSent] = useState<boolean>(false);
+  const [devPinAlert, setDevPinAlert] = useState<string>('');
+
+  // Login form fields
+  const [loginIdentifier, setLoginIdentifier] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
+
   // Create post form state
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState<string>('');
@@ -67,21 +96,6 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
   // Comment replies state
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState<string>('');
-
-  const getUserEmail = () => {
-    try {
-      const session = localStorage.getItem('auth_session') || sessionStorage.getItem('auth_session');
-      if (session) {
-        const data = JSON.parse(session);
-        return data.email || 'estudiante@alumno.buap.mx';
-      }
-    } catch (e) {
-      // fallback
-    }
-    return 'estudiante@alumno.buap.mx';
-  };
-
-  const userEmail = getUserEmail();
 
   useEffect(() => {
     if (isOpen) {
@@ -110,21 +124,144 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
     }
   };
 
+  const handleSendPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+    setDevPinAlert('');
+    if (!regEmail || !regEmail.includes('buap.mx')) {
+      setAuthError('Por favor ingresa un correo institucional válido (@alumno.buap.mx o @correo.buap.mx)');
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_pin', email: regEmail })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPinSent(true);
+        setAuthSuccess('Código PIN enviado correctamente.');
+        if (data.devPin) {
+          setDevPinAlert(data.devPin);
+        }
+      } else {
+        setAuthError(data.error || 'Error al enviar PIN.');
+      }
+    } catch (err) {
+      setAuthError('Error de conexión al enviar PIN.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    if (!regEmail || !regPin || !regUsername || !regPassword) {
+      setAuthError('Todos los campos son obligatorios.');
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register',
+          email: regEmail,
+          pin: regPin,
+          username: regUsername,
+          password: regPassword
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        localStorage.setItem('forum_session', JSON.stringify(data.user));
+        setForumUser(data.user);
+        setShowAuthView(false);
+        setRegEmail('');
+        setRegPin('');
+        setRegUsername('');
+        setRegPassword('');
+        setPinSent(false);
+      } else {
+        setAuthError(data.error || 'Error en el registro.');
+      }
+    } catch (err) {
+      setAuthError('Error de conexión en el registro.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    if (!loginIdentifier || !loginPassword) {
+      setAuthError('Ingresa tu usuario/correo y contraseña.');
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'login',
+          identifier: loginIdentifier,
+          password: loginPassword
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        localStorage.setItem('forum_session', JSON.stringify(data.user));
+        setForumUser(data.user);
+        setShowAuthView(false);
+        setLoginIdentifier('');
+        setLoginPassword('');
+      } else {
+        setAuthError(data.error || 'Credenciales inválidas.');
+      }
+    } catch (err) {
+      setAuthError('Error de conexión al iniciar sesión.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('forum_session');
+    setForumUser(null);
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!forumUser) {
+      setShowAuthView(true);
+      return;
+    }
     if (!newTitle.trim() || !newContent.trim()) return;
 
-    const username = userEmail.split('@')[0];
     const optimisticPost: ForumPost = {
       _id: 'temp-' + Date.now(),
       title: newTitle,
       content: newContent,
       category: newCategory,
       career: currentCareer || 'General',
-      author: username,
-      authorEmail: userEmail,
+      author: forumUser.username,
+      emailHash: forumUser.emailHash,
       likes: 1,
-      likedBy: [userEmail],
+      likedBy: [forumUser.emailHash],
       comments: [],
       createdAt: new Date().toISOString()
     };
@@ -144,7 +281,8 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
           content: newContent,
           category: newCategory,
           career: currentCareer,
-          authorEmail: userEmail
+          username: forumUser.username,
+          emailHash: forumUser.emailHash
         })
       });
       fetchPosts();
@@ -154,7 +292,12 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
   };
 
   const handleLike = async (post: ForumPost) => {
-    const hasLiked = post.likedBy?.includes(userEmail);
+    if (!forumUser) {
+      setShowAuthView(true);
+      return;
+    }
+
+    const hasLiked = post.likedBy?.includes(forumUser.emailHash);
     
     // Optimistic UI update
     setPosts(posts.map(p => {
@@ -162,8 +305,8 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
         const likedBy = p.likedBy || [];
         return {
           ...p,
-          likes: hasLiked ? p.likes - 1 : p.likes + 1,
-          likedBy: hasLiked ? likedBy.filter(e => e !== userEmail) : [...likedBy, userEmail]
+          likes: hasLiked ? Math.max(0, p.likes - 1) : p.likes + 1,
+          likedBy: hasLiked ? likedBy.filter(e => e !== forumUser.emailHash) : [...likedBy, forumUser.emailHash]
         };
       }
       return p;
@@ -177,7 +320,8 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
           body: JSON.stringify({
             action: 'like_post',
             postId: post._id,
-            authorEmail: userEmail
+            username: forumUser.username,
+            emailHash: forumUser.emailHash
           })
         });
       } catch (err) {
@@ -187,13 +331,16 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
   };
 
   const handleAddComment = async (postId: string) => {
+    if (!forumUser) {
+      setShowAuthView(true);
+      return;
+    }
     if (!commentText.trim()) return;
 
-    const username = userEmail.split('@')[0];
     const optimisticComment = {
       id: 'c-' + Date.now(),
-      author: username,
-      authorEmail: userEmail,
+      author: forumUser.username,
+      emailHash: forumUser.emailHash,
       content: commentText,
       createdAt: new Date().toISOString()
     };
@@ -217,7 +364,8 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
             action: 'add_comment',
             postId,
             commentContent: textToSend,
-            authorEmail: userEmail
+            username: forumUser.username,
+            emailHash: forumUser.emailHash
           })
         });
       } catch (err) {
@@ -237,8 +385,187 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
-      <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transition-all">
+      <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transition-all relative">
         
+        {/* Auth Overlay Modal */}
+        {showAuthView && (
+          <div className="absolute inset-0 z-50 bg-surface/95 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
+            <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 max-w-md w-full shadow-2xl relative my-auto">
+              <button
+                onClick={() => { setShowAuthView(false); setAuthError(''); }}
+                className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-surface-container text-on-surface-variant"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 mx-auto flex items-center justify-center text-white font-bold text-2xl shadow-lg mb-3">
+                  🔐
+                </div>
+                <h3 className="text-xl font-bold text-on-surface">Acceso al Foro BUAP</h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  🔒 Tu correo no se guardará. Solo almacenamos un hash criptográfico anónimo para verificar tu pertenencia a la BUAP.
+                </p>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex border-b border-outline-variant mb-5">
+                <button
+                  onClick={() => { setAuthTab('login'); setAuthError(''); setAuthSuccess(''); }}
+                  className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-all ${
+                    authTab === 'login'
+                      ? 'border-purple-500 text-purple-400'
+                      : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Iniciar Sesión
+                </button>
+                <button
+                  onClick={() => { setAuthTab('register'); setAuthError(''); setAuthSuccess(''); }}
+                  className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-all ${
+                    authTab === 'register'
+                      ? 'border-purple-500 text-purple-400'
+                      : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Regístrate gratis
+                </button>
+              </div>
+
+              {authError && (
+                <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2">
+                  <span className="material-symbols-outlined text-sm shrink-0">error</span>
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              {authSuccess && (
+                <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-start gap-2">
+                  <span className="material-symbols-outlined text-sm shrink-0">check_circle</span>
+                  <span>{authSuccess}</span>
+                </div>
+              )}
+
+              {devPinAlert && (
+                <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs flex flex-col gap-1">
+                  <span className="font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">bolt</span>
+                    Modo Gratuito / Pruebas Activo:
+                  </span>
+                  <span>Tu PIN de verificación temporal es: <strong className="text-sm tracking-wider bg-amber-500/20 px-2 py-0.5 rounded text-amber-200">{devPinAlert}</strong></span>
+                </div>
+              )}
+
+              {authTab === 'login' ? (
+                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">CORREO INSTITUCIONAL O USUARIO</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: lobito123 o estudiante@alumno.buap.mx"
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
+                      className="w-full bg-surface border border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">CONTRASEÑA</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full bg-surface border border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
+                  >
+                    {authLoading ? 'Verificando...' : 'Entrar al Foro'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">1. CORREO INSTITUCIONAL BUAP</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        required
+                        disabled={pinSent}
+                        placeholder="ejemplo@alumno.buap.mx"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        className="flex-1 bg-surface border border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-purple-500 disabled:opacity-60"
+                      />
+                      {!pinSent && (
+                        <button
+                          type="button"
+                          onClick={handleSendPin}
+                          disabled={authLoading}
+                          className="px-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl whitespace-nowrap transition-colors disabled:opacity-50"
+                        >
+                          {authLoading ? '...' : 'Enviar PIN'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {pinSent && (
+                    <div className="space-y-4 animate-fadeIn border-t border-outline-variant/60 pt-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-on-surface-variant mb-1">2. PIN DE VERIFICACIÓN (6 DÍGITOS)</label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          placeholder="123456"
+                          value={regPin}
+                          onChange={(e) => setRegPin(e.target.value)}
+                          className="w-full bg-surface border border-outline-variant rounded-xl p-3 text-sm tracking-widest font-bold text-center focus:outline-none focus:border-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-on-surface-variant mb-1">3. NOMBRE DE USUARIO (PÚBLICO)</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ej: lobito_computacion"
+                          value={regUsername}
+                          onChange={(e) => setRegUsername(e.target.value)}
+                          className="w-full bg-surface border border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-on-surface-variant mb-1">4. CONTRASEÑA</label>
+                        <input
+                          type="password"
+                          required
+                          placeholder="Mínimo 6 caracteres"
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          className="w-full bg-surface border border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-purple-500"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
+                      >
+                        {authLoading ? 'Registrando...' : 'Completar Registro'}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-outline-variant flex items-center justify-between bg-gradient-to-r from-purple-900/20 via-surface to-blue-900/20">
           <div className="flex items-center gap-3">
@@ -251,17 +578,41 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
               </h2>
               <p className="text-xs sm:text-sm text-on-surface-variant flex items-center gap-1.5">
                 <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                Discusiones exclusivas con correo institucional verificado
+                Discusiones anónimas con validación criptográfica BUAP
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-transform hover:scale-110"
-            aria-label="Cerrar foro"
-          >
-            <span className="material-symbols-outlined text-2xl">close</span>
-          </button>
+
+          <div className="flex items-center gap-3">
+            {forumUser ? (
+              <div className="flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant text-xs">
+                <span className="font-bold text-purple-400">@{forumUser.username}</span>
+                <button
+                  onClick={handleLogout}
+                  title="Cerrar sesión del foro"
+                  className="text-on-surface-variant hover:text-rose-400 ml-1 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">logout</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthView(true)}
+                className="px-3 py-1.5 rounded-full bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-all"
+              >
+                <span className="material-symbols-outlined text-sm">key</span>
+                <span className="hidden sm:inline">Iniciar Sesión</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-transform hover:scale-110"
+              aria-label="Cerrar foro"
+            >
+              <span className="material-symbols-outlined text-2xl">close</span>
+            </button>
+          </div>
         </div>
 
         {/* Filters and Controls */}
@@ -281,7 +632,13 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
 
             {/* New Topic Button */}
             <button
-              onClick={() => setIsCreating(!isCreating)}
+              onClick={() => {
+                if (!forumUser) {
+                  setShowAuthView(true);
+                } else {
+                  setIsCreating(!isCreating);
+                }
+              }}
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all hover:scale-105 active:scale-95"
             >
               <span className="material-symbols-outlined text-base">add_comment</span>
@@ -314,7 +671,7 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           
           {/* Create Post Form Card */}
-          {isCreating && (
+          {isCreating && forumUser && (
             <form onSubmit={handleCreatePost} className="p-5 rounded-2xl bg-surface-container border-2 border-purple-500/40 shadow-xl space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between border-b border-outline-variant pb-2">
                 <h3 className="font-bold text-lg flex items-center gap-2 text-purple-400">
@@ -322,7 +679,7 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
                   Publicar una nueva discusión
                 </h3>
                 <span className="text-xs text-on-surface-variant bg-surface px-2.5 py-1 rounded-full border border-outline-variant">
-                  Como: {userEmail.split('@')[0]} 🐺
+                  Como: @{forumUser.username} 🐺
                 </span>
               </div>
 
@@ -396,7 +753,7 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
           ) : (
             filteredPosts.map(post => {
               const isExpanded = expandedPostId === post._id;
-              const hasLiked = post.likedBy?.includes(userEmail);
+              const hasLiked = forumUser ? post.likedBy?.includes(forumUser.emailHash) : false;
               const authorInitials = post.author.slice(0, 2).toUpperCase();
 
               return (
@@ -413,9 +770,9 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-on-surface">@{post.author}</span>
-                          <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                          <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1" title="Identidad verificada por hash criptográfico BUAP">
                             <span className="material-symbols-outlined text-[12px]">verified</span>
-                            BUAP
+                            Verificado
                           </span>
                         </div>
                         <p className="text-xs text-on-surface-variant">{post.career}</p>
@@ -478,15 +835,17 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
                       <div className="flex gap-2 pt-1">
                         <input
                           type="text"
-                          placeholder="Escribe una respuesta a @lobito..."
+                          placeholder={forumUser ? "Escribe una respuesta..." : "Inicia sesión para comentar..."}
+                          disabled={!forumUser}
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && post._id && handleAddComment(post._id)}
-                          className="flex-1 bg-surface border border-outline-variant rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500"
+                          className="flex-1 bg-surface border border-outline-variant rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 disabled:opacity-50"
                         />
                         <button
                           onClick={() => post._id && handleAddComment(post._id)}
-                          className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-colors flex items-center gap-1"
+                          disabled={!forumUser}
+                          className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-colors flex items-center gap-1 disabled:opacity-50"
                         >
                           <span className="material-symbols-outlined text-sm">send</span>
                         </button>
@@ -500,8 +859,8 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-surface-container-lowest border-t border-outline-variant text-center text-xs text-on-surface-variant">
-          Las opiniones expresadas representan a cada estudiante verificado. Mantén el respeto lobo 🐾.
+        <div className="p-3 bg-surface-container-lowest border-t border-outline-variant text-center text-xs text-on-surface-variant flex items-center justify-center gap-2">
+          <span>🔒 Privacidad Garantizada: Tu correo institucional se protege mediante hash criptográfico SHA-256.</span>
         </div>
       </div>
     </div>

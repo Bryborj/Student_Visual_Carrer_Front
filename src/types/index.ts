@@ -39,10 +39,15 @@ export interface StudyPlanStats {
   percentage: number;
 }
 
+export interface ForumUser {
+  username: string;
+  emailHash: string;
+}
+
 export interface ForumComment {
   id: string;
   author: string;
-  authorEmail?: string;
+  emailHash?: string;
   content: string;
   createdAt: string;
 }
@@ -54,7 +59,7 @@ export interface ForumPost {
   category: string;
   career: string;
   author: string;
-  authorEmail?: string;
+  emailHash?: string;
   likes: number;
   likedBy?: string[];
   comments: ForumComment[];
