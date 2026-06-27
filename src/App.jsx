@@ -4,7 +4,7 @@ import ClusterColumn from './components/ClusterColumn';
 import VerifyEmail from './components/VerifyEmail';
 import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
-import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal';
+import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal.tsx';
 import { ForumModal } from './components/ForumModal';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
