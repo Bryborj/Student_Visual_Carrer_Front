@@ -3,10 +3,12 @@
   "version": "1.2.2",
   "type": "module",
   "main": "index.js",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "Bryan Borges",
@@ -14,6 +16,8 @@
   "description": "",
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "mongodb": "^7.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
