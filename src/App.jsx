@@ -6,11 +6,13 @@ import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
 import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal.tsx';
 import { ForumModal } from './components/ForumModal';
+import WelcomeScreen from './components/WelcomeScreen';
 import { useStudyPlan } from './hooks/useStudyPlan';
 
 function App() {
     const [isVerified, setIsVerified] = useState(false);
     const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash === '#admin');
+    const [currentView, setCurrentView] = useState('welcome');
     
     const [availablePlans, setAvailablePlans] = useState([]);
     const [selectedPlanConfig, setSelectedPlanConfigState] = useState(null);
@@ -147,10 +149,31 @@ function App() {
         return <AdminDashboard />;
     }
 
+    if (currentView === 'welcome') {
+        return (
+            <>
+                <WelcomeScreen
+                    onSelectVisualizer={() => setCurrentView('visualizer')}
+                    onSelectForum={() => setIsForumModalOpen(true)}
+                    availablePlansCount={availablePlans.length}
+                />
+                <UpdatesModal 
+                    isOpen={isUpdatesModalOpen} 
+                    onClose={handleCloseUpdates} 
+                />
+                <ForumModal
+                    isOpen={isForumModalOpen}
+                    onClose={() => setIsForumModalOpen(false)}
+                    currentCareer={selectedPlanConfig?.career || 'Ingeniería en Ciencias de la Computación'}
+                />
+            </>
+        );
+    }
+
     if (!isVerified) {
         return (
             <div className="min-h-screen bg-background">
-                <VerifyEmail onVerified={handleVerification} />
+                <VerifyEmail onVerified={handleVerification} onBack={() => setCurrentView('welcome')} />
             </div>
         );
     }
@@ -178,6 +201,7 @@ function App() {
             onReset={resetPlan} 
             title={planData.career} 
             logo_url={planData.logo_url} 
+            onGoHome={() => setCurrentView('welcome')}
             onOpenPlanSelector={() => setIsPlanModalOpen(true)}
             onOpenUpdates={() => setIsUpdatesModalOpen(true)}
             onOpenForum={() => setIsForumModalOpen(true)}

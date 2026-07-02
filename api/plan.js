@@ -1,68 +1,48 @@
-import { MongoClient } from 'mongodb';
-
-let cachedClient = null;
-let cachedDb = null;
-
-async function connectToDatabase(uri) {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
-
-  const client = await MongoClient.connect(uri);
-  const db = client.db('study_plans');
-
-  cachedClient = client;
-  cachedDb = db;
-  return { client, db };
-}
+import { pool } from './db.js';
 
 export default async function handler(req, res) {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    return res.status(500).json({ error: 'Database URI is missing.' });
-  }
-
   try {
-    const { db } = await connectToDatabase(uri);
-    
-    // Obtener parámetros de búsqueda (opcionales)
     const careerQuery = req.query.career || "Ingeniería en Ciencias de la Computación";
     const modalidadQuery = req.query.modalidad;
-    
-    const matchStage = { career: careerQuery };
+
+    let query = `
+      SELECT 
+        p.id AS "_id",
+        p.career,
+        p.modalidad,
+        p.courses,
+        p.electives,
+        p.min_credits,
+        p.max_credits,
+        f.name AS faculty,
+        f.logo_url
+      FROM plans p
+      LEFT JOIN faculties f ON p.faculty_id = f.id
+      WHERE p.career = $1
+    `;
+    const params = [careerQuery];
+
     if (modalidadQuery) {
-        matchStage.modalidad = modalidadQuery;
+      query += ` AND p.modalidad = $2`;
+      params.push(modalidadQuery);
     }
 
-    const planData = await db.collection('plans').aggregate([
-      { $match: matchStage },
-      {
-        $lookup: {
-          from: "faculties",
-          localField: "facultyId",
-          foreignField: "_id",
-          as: "facultyData"
-        }
-      }
-    ]).toArray();
+    query += ` LIMIT 1;`;
 
-    if (!planData || planData.length === 0) {
+    const { rows } = await pool.query(query, params);
+
+    if (!rows || rows.length === 0) {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    const plan = planData[0];
-    
-    // Reconstruir el objeto para el frontend
-    if (plan.facultyData && plan.facultyData.length > 0) {
-      plan.faculty = plan.facultyData[0].name;
-      plan.logo_url = plan.facultyData[0].logo_url;
+    const plan = rows[0];
+    if (plan._id) {
+      plan._id = plan._id.toString();
     }
-    delete plan.facultyData;
-    delete plan.facultyId;
 
     res.status(200).json(plan);
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('Database connection error in /api/plan:', error);
     res.status(500).json({ error: 'Failed to connect to the database or fetch data.' });
   }
 }

@@ -6,7 +6,7 @@ export const useStudyPlan = (career, modalidad) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 1. Fetch Data from MongoDB via API Route
+    // 1. Fetch Data from PostgreSQL via API Route
     useEffect(() => {
         if (!career) return;
         const fetchPlan = async () => {

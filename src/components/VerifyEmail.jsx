@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function VerifyEmail({ onVerified }) {
+export default function VerifyEmail({ onVerified, onBack }) {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -114,6 +114,17 @@ export default function VerifyEmail({ onVerified }) {
                             </svg>
                         ) : 'Verificar Correo'}
                     </button>
+
+                    {onBack && (
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            className="w-full py-2 px-4 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-medium rounded-lg transition-colors text-sm border border-outline-variant flex justify-center items-center gap-1.5"
+                        >
+                            <span className="material-symbols-outlined text-base">arrow_back</span>
+                            Volver al Portal de Bienvenida
+                        </button>
+                    )}
                 </form>
             </div>
         </div>

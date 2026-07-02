@@ -10,6 +10,7 @@ import adminHandler from './api/admin.js';
 import authHandler from './api/auth.js';
 import forumHandler from './api/forum.js';
 import verifyEmailHandler from './api/verifyEmail.js';
+import { initDatabase } from './api/db.js';
 
 // Cargar variables de entorno locales si existen (.env.local o .env)
 if (fs.existsSync('.env.local')) {
@@ -115,6 +116,11 @@ if (fs.existsSync(distPath)) {
   console.warn('Advertencia: No se encontró la carpeta "dist". El servidor API está activo pero no servirá archivos estáticos hasta ejecutar "pnpm build".');
 }
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor activo en puerto ${PORT}`);
+initDatabase().then(() => {
+  console.log('✅ Base de datos PostgreSQL inicializada.');
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor activo en puerto ${PORT}`);
+  });
+}).catch(err => {
+  console.error('❌ Error inicializando base de datos PostgreSQL:', err);
 });

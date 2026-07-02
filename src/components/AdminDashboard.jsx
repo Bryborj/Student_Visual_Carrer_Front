@@ -31,7 +31,7 @@ function AdminDashboard() {
             const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
-                delete data._id; // Delete internal Mongo ID
+                delete data._id; // Delete internal Database ID
                 setJsonInput(JSON.stringify(data, null, 2));
                 setStatus({ type: 'success', message: 'Plan cargado correctamente. Puedes editarlo abajo.' });
             } else {

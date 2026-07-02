@@ -1,19 +1,5 @@
-import { MongoClient } from 'mongodb';
+import { pool } from './db.js';
 import crypto from 'crypto';
-
-let cachedClient = null;
-let cachedDb = null;
-
-async function connectToDatabase(uri) {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
-  const client = await MongoClient.connect(uri);
-  const db = client.db('study_plans');
-  cachedClient = client;
-  cachedDb = db;
-  return { client, db };
-}
 
 function hashEmail(email) {
   return crypto.createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
@@ -36,16 +22,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    return res.status(500).json({ error: 'Falta configuración de base de datos.' });
-  }
-
   try {
-    const { db } = await connectToDatabase(uri);
-    const usersCol = db.collection('forum_users');
-    const pinsCol = db.collection('forum_pins');
-
     const { action, email, pin, username, password, identifier } = req.body;
 
     // 1. ENVIAR PIN DE VERIFICACIÓN
@@ -62,8 +39,8 @@ export default async function handler(req, res) {
       const emailHash = hashEmail(email);
 
       // Verificar si el usuario ya existe
-      const existingUser = await usersCol.findOne({ emailHash });
-      if (existingUser) {
+      const existingRes = await pool.query(`SELECT id FROM forum_users WHERE email_hash = $1;`, [emailHash]);
+      if (existingRes.rows.length > 0) {
         return res.status(400).json({ error: 'Este correo institucional ya está registrado en el foro. Por favor inicia sesión.' });
       }
 
@@ -85,11 +62,13 @@ export default async function handler(req, res) {
       const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutos
 
-      await pinsCol.updateOne(
-        { emailHash },
-        { $set: { emailHash, pin: generatedPin, expiresAt } },
-        { upsert: true }
-      );
+      await pool.query(`
+        INSERT INTO forum_pins (email_hash, pin, expires_at)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (email_hash) DO UPDATE SET
+          pin = EXCLUDED.pin,
+          expires_at = EXCLUDED.expires_at;
+      `, [emailHash, generatedPin, expiresAt]);
 
       // Envío de correo mediante API de Brevo (Recurso Gratuito - 300 emails/día)
       const brevoKey = process.env.BREVO_API_KEY;
@@ -118,7 +97,7 @@ export default async function handler(req, res) {
               <hr style="border: none; border-top: 1px solid #334155; margin: 28px 0;" />
               <div style="text-align: center;">
                 <span style="font-size: 11px; color: #64748b; display: inline-block; background-color: #1e293b; padding: 6px 12px; border-radius: 9999px; border: 1px solid #334155;">
-                  🔒 Privacidad BUAP: Tu correo no se almacena, solo conservamos un hash SHA-256 anónimos.
+                  🔒 Privacidad BUAP: Tu correo no se almacena, solo conservamos un hash SHA-256 anónimo.
                 </span>
               </div>
             </div>
@@ -175,9 +154,9 @@ export default async function handler(req, res) {
     if (action === 'verify_pin') {
       if (!email || !pin) return res.status(400).json({ error: 'Correo y PIN requeridos.' });
       const emailHash = hashEmail(email);
-      const record = await pinsCol.findOne({ emailHash, pin });
+      const resPin = await pool.query(`SELECT * FROM forum_pins WHERE email_hash = $1 AND pin = $2;`, [emailHash, pin]);
 
-      if (!record || Date.now() > record.expiresAt) {
+      if (resPin.rows.length === 0 || Date.now() > resPin.rows[0].expires_at) {
         return res.status(400).json({ error: 'PIN incorrecto o expirado.' });
       }
 
@@ -199,29 +178,25 @@ export default async function handler(req, res) {
       }
 
       const cleanUsername = username.trim();
-      const existingName = await usersCol.findOne({ username: { $regex: new RegExp(`^${cleanUsername}$`, 'i') } });
-      if (existingName) {
+      const existingName = await pool.query(`SELECT id FROM forum_users WHERE LOWER(username) = LOWER($1);`, [cleanUsername]);
+      if (existingName.rows.length > 0) {
         return res.status(400).json({ error: 'Este nombre de usuario ya está ocupado. Elige otro.' });
       }
 
       const emailHash = hashEmail(email);
-      const pinRecord = await pinsCol.findOne({ emailHash, pin });
+      const pinRecord = await pool.query(`SELECT * FROM forum_pins WHERE email_hash = $1 AND pin = $2;`, [emailHash, pin]);
 
-      if (!pinRecord || Date.now() > pinRecord.expiresAt) {
+      if (pinRecord.rows.length === 0 || Date.now() > pinRecord.rows[0].expires_at) {
         return res.status(400).json({ error: 'El PIN de verificación es incorrecto o ha expirado.' });
       }
 
-      // Crear usuario en MongoDB sin guardar el correo real
       const passwordHash = hashPassword(password);
-      const newUser = {
-        username: cleanUsername,
-        emailHash, // GUARDAMOS SOLO EL HASH DEL CORREO
-        passwordHash,
-        createdAt: new Date().toISOString()
-      };
+      await pool.query(`
+        INSERT INTO forum_users (username, email_hash, password_hash, created_at)
+        VALUES ($1, $2, $3, $4);
+      `, [cleanUsername, emailHash, passwordHash, new Date()]);
 
-      await usersCol.insertOne(newUser);
-      await pinsCol.deleteOne({ emailHash }); // Limpiar PIN usado
+      await pool.query(`DELETE FROM forum_pins WHERE email_hash = $1;`, [emailHash]);
 
       return res.status(201).json({
         success: true,
@@ -236,24 +211,23 @@ export default async function handler(req, res) {
       }
 
       const cleanId = identifier.trim();
-      let user = null;
+      let userRes;
 
-      // Si tiene @ o termina en .mx, asumimos intento por correo y buscamos por su hash
       if (cleanId.includes('@')) {
         const emailHash = hashEmail(cleanId);
-        user = await usersCol.findOne({ emailHash });
+        userRes = await pool.query(`SELECT * FROM forum_users WHERE email_hash = $1;`, [emailHash]);
       } else {
-        // Buscar por nombre de usuario (case-insensitive)
-        user = await usersCol.findOne({ username: { $regex: new RegExp(`^${cleanId}$`, 'i') } });
+        userRes = await pool.query(`SELECT * FROM forum_users WHERE LOWER(username) = LOWER($1);`, [cleanId]);
       }
 
-      if (!user || !verifyPassword(password, user.passwordHash)) {
+      if (userRes.rows.length === 0 || !verifyPassword(password, userRes.rows[0].password_hash)) {
         return res.status(401).json({ error: 'Credenciales incorrectas. Verifica tu usuario/correo y contraseña.' });
       }
 
+      const user = userRes.rows[0];
       return res.status(200).json({
         success: true,
-        user: { username: user.username, emailHash: user.emailHash }
+        user: { username: user.username, emailHash: user.email_hash }
       });
     }
 

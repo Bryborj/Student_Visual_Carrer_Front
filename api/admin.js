@@ -1,20 +1,4 @@
-import { MongoClient } from 'mongodb';
-
-let cachedClient = null;
-let cachedDb = null;
-
-async function connectToDatabase(uri) {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
-
-  const client = await MongoClient.connect(uri);
-  const db = client.db('study_plans');
-
-  cachedClient = client;
-  cachedDb = db;
-  return { client, db };
-}
+import { pool } from './db.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -28,64 +12,55 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'No autorizado. Contraseña incorrecta.' });
   }
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    return res.status(500).json({ error: 'Database URI is missing.' });
-  }
-
   try {
-    const { db } = await connectToDatabase(uri);
-
     if (action === 'verify') {
       return res.status(200).json({ success: true, message: 'Autenticado' });
     }
 
     if (action === 'addPlan') {
       if (!payload || !payload.career || !payload.courses) {
-         return res.status(400).json({ error: 'El plan debe contener career y courses.' });
-      }
-      
-      // Normalizar la facultad
-      if (payload.faculty) {
-        let facultyRecord = await db.collection('faculties').findOne({ name: payload.faculty });
-        if (!facultyRecord) {
-            const result = await db.collection('faculties').insertOne({ 
-                name: payload.faculty, 
-                logo_url: payload.logo_url || '' 
-            });
-            payload.facultyId = result.insertedId;
-        } else {
-            payload.facultyId = facultyRecord._id;
-            // Si mandan un logo nuevo, lo actualizamos (opcional)
-            if (payload.logo_url && payload.logo_url !== facultyRecord.logo_url) {
-                await db.collection('faculties').updateOne(
-                    { _id: facultyRecord._id },
-                    { $set: { logo_url: payload.logo_url } }
-                );
-            }
-        }
-        delete payload.faculty;
-        delete payload.logo_url;
-      }
-      
-      // Upsert usando career y modalidad como identificador único
-      const query = { career: payload.career };
-      if (payload.mode) {
-          query.mode = payload.mode;
+        return res.status(400).json({ error: 'El plan debe contener career y courses.' });
       }
 
-      await db.collection('plans').updateOne(
-        query,
-        { $set: payload },
-        { upsert: true }
-      );
-      
+      let facultyId = null;
+      if (payload.faculty) {
+        const facRes = await pool.query(`
+          INSERT INTO faculties (name, logo_url)
+          VALUES ($1, $2)
+          ON CONFLICT (name) DO UPDATE SET
+            logo_url = COALESCE(NULLIF(EXCLUDED.logo_url, ''), faculties.logo_url)
+          RETURNING id;
+        `, [payload.faculty, payload.logo_url || '']);
+        facultyId = facRes.rows[0].id;
+      }
+
+      const modalidad = payload.modalidad || payload.mode || 'Escolarizada';
+
+      await pool.query(`
+        INSERT INTO plans (career, modalidad, faculty_id, courses, electives, min_credits, max_credits)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (career, modalidad) DO UPDATE SET
+          faculty_id = EXCLUDED.faculty_id,
+          courses = EXCLUDED.courses,
+          electives = EXCLUDED.electives,
+          min_credits = EXCLUDED.min_credits,
+          max_credits = EXCLUDED.max_credits;
+      `, [
+        payload.career,
+        modalidad,
+        facultyId,
+        JSON.stringify(payload.courses || []),
+        JSON.stringify(payload.electives || []),
+        payload.min_credits || null,
+        payload.max_credits || null
+      ]);
+
       return res.status(200).json({ success: true, message: 'Plan agregado/actualizado correctamente.' });
     }
 
     return res.status(400).json({ error: 'Acción desconocida.' });
   } catch (error) {
-    console.error('Database connection error:', error);
-    res.status(500).json({ error: 'Failed to connect to the database or execute action.' });
+    console.error('Database connection error in /api/admin:', error);
+    res.status(500).json({ error: 'Failed to execute action in PostgreSQL.' });
   }
 }

@@ -1,41 +1,43 @@
-import { MongoClient, ObjectId } from 'mongodb';
+import { pool } from './db.js';
+import crypto from 'crypto';
 
-let cachedClient = null;
-let cachedDb = null;
-
-async function connectToDatabase(uri) {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
-  const client = await MongoClient.connect(uri);
-  const db = client.db('study_plans');
-  cachedClient = client;
-  cachedDb = db;
-  return { client, db };
+function formatPost(row) {
+  if (!row) return null;
+  return {
+    _id: row.id,
+    title: row.title,
+    content: row.content,
+    category: row.category,
+    career: row.career,
+    author: row.author,
+    emailHash: row.email_hash,
+    likes: row.likes || 0,
+    likedBy: row.liked_by || [],
+    comments: row.comments || [],
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString()
+  };
 }
 
 export default async function handler(req, res) {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    return res.status(500).json({ error: 'Database URI is missing.' });
-  }
-
   try {
-    const { db } = await connectToDatabase(uri);
-    const collection = db.collection('forum_posts');
-
     if (req.method === 'GET') {
       const { category, career } = req.query;
-      const query = {};
+      let query = `SELECT * FROM forum_posts WHERE 1=1`;
+      const params = [];
+
       if (category && category !== 'Todos') {
-        query.category = category;
+        params.push(category);
+        query += ` AND category = $${params.length}`;
       }
       if (career && career !== 'Todas') {
-        query.career = career;
+        params.push(career);
+        query += ` AND career = $${params.length}`;
       }
 
-      const posts = await collection.find(query).sort({ createdAt: -1 }).limit(50).toArray();
-      return res.status(200).json(posts);
+      query += ` ORDER BY created_at DESC LIMIT 50;`;
+
+      const { rows } = await pool.query(query, params);
+      return res.status(200).json(rows.map(formatPost));
     }
 
     if (req.method === 'POST') {
@@ -50,57 +52,81 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Título, contenido y categoría son requeridos.' });
         }
 
-        const newPost = {
+        const newId = crypto.randomUUID();
+        const createdAt = new Date();
+
+        const insertQuery = `
+          INSERT INTO forum_posts (id, title, content, category, career, author, email_hash, likes, liked_by, comments, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, 0, '[]'::jsonb, '[]'::jsonb, $8)
+          RETURNING *;
+        `;
+        const { rows } = await pool.query(insertQuery, [
+          newId,
           title,
           content,
           category,
-          career: career || 'General',
-          author: username,
-          emailHash, // Solo guardamos el hash del correo institucional para verificar identidad/unidad
-          likes: 0,
-          likedBy: [], // Guardará los emailHash de quienes dan like
-          comments: [],
-          createdAt: new Date().toISOString()
-        };
+          career || 'General',
+          username,
+          emailHash,
+          createdAt
+        ]);
 
-        const result = await collection.insertOne(newPost);
-        newPost._id = result.insertedId;
-        return res.status(201).json(newPost);
+        return res.status(201).json(formatPost(rows[0]));
       }
 
       if (action === 'like_post') {
         if (!postId) return res.status(400).json({ error: 'Post ID requerido.' });
-        const post = await collection.findOne({ _id: new ObjectId(postId) });
-        if (!post) return res.status(404).json({ error: 'Post no encontrado.' });
 
-        const likedBy = post.likedBy || [];
+        const postRes = await pool.query(`SELECT * FROM forum_posts WHERE id = $1;`, [postId]);
+        if (postRes.rows.length === 0) return res.status(404).json({ error: 'Post no encontrado.' });
+
+        const post = postRes.rows[0];
+        const likedBy = post.liked_by || [];
         const hasLiked = likedBy.includes(emailHash);
-        const update = hasLiked
-          ? { $inc: { likes: -1 }, $pull: { likedBy: emailHash } }
-          : { $inc: { likes: 1 }, $addToSet: { likedBy: emailHash } };
 
-        await collection.updateOne({ _id: new ObjectId(postId) }, update);
-        const updatedPost = await collection.findOne({ _id: new ObjectId(postId) });
-        return res.status(200).json(updatedPost);
+        let updatedLikedBy;
+        let likesDelta;
+        if (hasLiked) {
+          updatedLikedBy = likedBy.filter(e => e !== emailHash);
+          likesDelta = -1;
+        } else {
+          updatedLikedBy = [...likedBy, emailHash];
+          likesDelta = 1;
+        }
+
+        const updateRes = await pool.query(`
+          UPDATE forum_posts
+          SET likes = likes + $1, liked_by = $2
+          WHERE id = $3
+          RETURNING *;
+        `, [likesDelta, JSON.stringify(updatedLikedBy), postId]);
+
+        return res.status(200).json(formatPost(updateRes.rows[0]));
       }
 
       if (action === 'add_comment') {
         if (!postId || !commentContent) return res.status(400).json({ error: 'Post ID y comentario requeridos.' });
+
         const newComment = {
-          id: new ObjectId().toString(),
+          id: crypto.randomUUID(),
           author: username,
           emailHash,
           content: commentContent,
           createdAt: new Date().toISOString()
         };
 
-        await collection.updateOne(
-          { _id: new ObjectId(postId) },
-          { $push: { comments: newComment } }
-        );
+        const updateRes = await pool.query(`
+          UPDATE forum_posts
+          SET comments = COALESCE(comments, '[]'::jsonb) || $1::jsonb
+          WHERE id = $2
+          RETURNING *;
+        `, [JSON.stringify([newComment]), postId]);
 
-        const updatedPost = await collection.findOne({ _id: new ObjectId(postId) });
-        return res.status(200).json(updatedPost);
+        if (updateRes.rows.length === 0) {
+          return res.status(404).json({ error: 'Post no encontrado.' });
+        }
+
+        return res.status(200).json(formatPost(updateRes.rows[0]));
       }
 
       return res.status(400).json({ error: 'Acción no válida.' });

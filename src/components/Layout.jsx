@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null, onOpenPlanSelector, onOpenUpdates, onOpenForum }) => {
+const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null, onOpenPlanSelector, onOpenUpdates, onOpenForum, onGoHome }) => {
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -52,6 +52,16 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
                     </div>
 
                     <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto">
+                        {onGoHome && (
+                            <button
+                                onClick={onGoHome}
+                                aria-label="Volver al Portal"
+                                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
+                                title="Volver a la Pantalla de Bienvenida"
+                            >
+                                <span className="material-symbols-outlined text-blue-500">other_houses</span>
+                            </button>
+                        )}
                         {onOpenForum && (
                             <button
                                 onClick={onOpenForum}
