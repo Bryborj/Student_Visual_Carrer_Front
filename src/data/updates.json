@@ -1,5 +1,14 @@
 [
   {
+    "version": "v1.3.0",
+    "date": "2 de Julio, 2026",
+    "title": "Optimización de Carga y Corrección de Errores",
+    "changes": [
+      "▪️ Optimizacion de tiempos de carga.",
+      "▪️ Se han corregido errores menores."
+    ]
+  },
+  {
     "version": "v1.2.2",
     "date": "27 de Junio, 2026",
     "title": "Mejoras en el flujo de registro y errores menores",
