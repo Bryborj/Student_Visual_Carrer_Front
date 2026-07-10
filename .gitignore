@@ -26,3 +26,6 @@ logs/
 *.log
 .vercel
 .env*
+
+# mcp
+stitch_screens/

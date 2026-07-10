@@ -5,20 +5,19 @@ import VerifyEmail from './components/VerifyEmail';
 import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
 import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal.tsx';
-import { ForumModal } from './components/ForumModal';
+import { ForumPage } from './components/ForumPage';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useStudyPlan } from './hooks/useStudyPlan';
+import { useRouter, navigate } from './hooks/useRouter';
 
 function App() {
+    const { pathname, hash } = useRouter();
     const [isVerified, setIsVerified] = useState(false);
-    const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash === '#admin');
-    const [currentView, setCurrentView] = useState('welcome');
     
     const [availablePlans, setAvailablePlans] = useState([]);
     const [selectedPlanConfig, setSelectedPlanConfigState] = useState(null);
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
     const [isUpdatesModalOpen, setIsUpdatesModalOpen] = useState(false);
-    const [isForumModalOpen, setIsForumModalOpen] = useState(false);
 
     const handleCloseUpdates = () => {
         setIsUpdatesModalOpen(false);
@@ -86,10 +85,6 @@ function App() {
 
     // Inicializar el tema de forma global y verificar sesión guardada
     useEffect(() => {
-        const handleHashChange = () => {
-            setIsAdminRoute(window.location.hash === '#admin');
-        };
-        window.addEventListener('hashchange', handleHashChange);
         const theme = localStorage.getItem('theme');
         const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (isDark) {
@@ -145,26 +140,27 @@ function App() {
 
     const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan(selectedPlanConfig?.career, selectedPlanConfig?.modalidad);
 
+    const isAdminRoute = pathname === '/admin' || hash === '#admin';
+    const isForumRoute = pathname === '/foro' || pathname === '/forum';
+    const isVisualizerRoute = pathname === '/visualizador' || pathname === '/visualizer';
+
     if (isAdminRoute) {
         return <AdminDashboard />;
     }
 
-    if (currentView === 'welcome') {
+    if (isForumRoute) {
+        return (
+            <ForumPage currentCareer={selectedPlanConfig?.career || 'Ingeniería en Ciencias de la Computación'} />
+        );
+    }
+
+    if (!isVisualizerRoute) {
         return (
             <>
-                <WelcomeScreen
-                    onSelectVisualizer={() => setCurrentView('visualizer')}
-                    onSelectForum={() => setIsForumModalOpen(true)}
-                    availablePlansCount={availablePlans.length}
-                />
+                <WelcomeScreen availablePlansCount={availablePlans.length} />
                 <UpdatesModal 
                     isOpen={isUpdatesModalOpen} 
                     onClose={handleCloseUpdates} 
-                />
-                <ForumModal
-                    isOpen={isForumModalOpen}
-                    onClose={() => setIsForumModalOpen(false)}
-                    currentCareer={selectedPlanConfig?.career || 'Ingeniería en Ciencias de la Computación'}
                 />
             </>
         );
@@ -173,7 +169,7 @@ function App() {
     if (!isVerified) {
         return (
             <div className="min-h-screen bg-background">
-                <VerifyEmail onVerified={handleVerification} onBack={() => setCurrentView('welcome')} />
+                <VerifyEmail onVerified={handleVerification} onBack={() => navigate('/')} />
             </div>
         );
     }
@@ -194,26 +190,20 @@ function App() {
         );
     }
 
-
     return (
         <Layout 
             stats={stats} 
             onReset={resetPlan} 
             title={planData.career} 
             logo_url={planData.logo_url} 
-            onGoHome={() => setCurrentView('welcome')}
+            onGoHome={() => navigate('/')}
             onOpenPlanSelector={() => setIsPlanModalOpen(true)}
             onOpenUpdates={() => setIsUpdatesModalOpen(true)}
-            onOpenForum={() => setIsForumModalOpen(true)}
+            onOpenForum={() => navigate('/foro')}
         >
             <UpdatesModal 
                 isOpen={isUpdatesModalOpen} 
                 onClose={handleCloseUpdates} 
-            />
-            <ForumModal
-                isOpen={isForumModalOpen}
-                onClose={() => setIsForumModalOpen(false)}
-                currentCareer={planData.career}
             />
             <PlanSelector 
                 isOpen={isPlanModalOpen}

@@ -154,6 +154,33 @@
   scrollbar-width: none;
 }
 
+/* Stitch Minimalist Academic UI Styles */
+.academic-card {
+    background: var(--color-surface-container, #171f33);
+    border: 1px solid var(--color-surface-variant, #2d3449);
+    transition: all 0.3s ease;
+}
+.academic-card:hover {
+    border-color: var(--color-outline, #8f9099);
+    background: var(--color-surface-container-high, #1d263b);
+}
+.text-accent {
+    color: var(--color-primary, #b9c5ef);
+}
+.bg-subtle-glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(132, 144, 183, 0.08) 0%, rgba(11, 19, 38, 0) 70%);
+    z-index: 0;
+    filter: blur(60px);
+    pointer-events: none;
+}
+.serif-title {
+    font-family: "Source Serif 4", serif;
+    font-optical-sizing: auto;
+}
+
 
 
 @media print {
