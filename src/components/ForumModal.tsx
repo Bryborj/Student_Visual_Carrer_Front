@@ -15,42 +15,7 @@ const CATEGORIES = [
   { id: '🚀 Proyectos & Colaboración', label: 'Proyectos & Colaboración', color: 'bg-purple-500 text-white', dot: 'bg-purple-500', badge: 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300' }
 ];
 
-const MOCK_POSTS: ForumPost[] = [
-  {
-    _id: 'mock-1',
-    title: '¿Recomendaciones para Estructuras de Datos?',
-    content: 'Hola comunidad lobo 🐺. Voy a llevar Estructuras de Datos el próximo semestre, ¿qué profesores recomiendan que expliquen bien y practiquen mucho con proyectos reales?',
-    category: '👨‍🏫 Materias & Profesores',
-    career: 'Ingeniería en Ciencias de la Computación',
-    author: 'lobito.buap',
-    emailHash: 'mock-hash-1',
-    likes: 12,
-    likedBy: [],
-    comments: [
-      {
-        id: 'c1',
-        author: 'ana.sofia',
-        emailHash: 'mock-hash-2',
-        content: 'Te recomiendo mucho repasar punteros y árboles antes de iniciar, ¡hace toda la diferencia!',
-        createdAt: '2026-06-26T14:30:00Z'
-      }
-    ],
-    createdAt: '2026-06-26T10:00:00Z'
-  },
-  {
-    _id: 'mock-2',
-    title: 'Grupo de estudio para Sistemas Operativos 🐧',
-    content: 'Estamos armando un grupo para estudiar temas de concurrencia y Linux en ICC. Si alguien quiere unirse nos juntamos en la biblioteca central.',
-    category: '🚀 Proyectos & Colaboración',
-    career: 'Ingeniería en Ciencias de la Computación',
-    author: 'carlos.dev',
-    emailHash: 'mock-hash-3',
-    likes: 8,
-    likedBy: [],
-    comments: [],
-    createdAt: '2026-06-25T18:20:00Z'
-  }
-];
+const MOCK_POSTS: ForumPost[] = [];
 
 export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, currentCareer }) => {
   const [posts, setPosts] = useState<ForumPost[]>(MOCK_POSTS);
