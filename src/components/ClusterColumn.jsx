@@ -3,7 +3,7 @@ import SubjectNode from './SubjectNode';
 
 const ClusterColumn = ({ cluster, subjects, getSubjectStatus, onToggleSubject }) => {
     // 10 filas máximo según el JSON
-    const maxRow = 10;
+    const maxRow = Math.max(...subjects.map(s => s.position_Y));
     const rows = Array.from({ length: maxRow }, (_, i) => i + 1);
 
     return (
