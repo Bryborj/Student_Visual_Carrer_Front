@@ -37,6 +37,7 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                     <div className="hidden md:flex items-center gap-10">
                         <Link to="/visualizador" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Visualizador</Link>
                         <Link to="/foro" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Foro</Link>
+                        <Link to="/propuestas" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Actualizar Plan</Link>
                     </div>
                     <div className="flex items-center gap-4">
                         <button

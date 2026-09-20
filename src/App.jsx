@@ -6,6 +6,7 @@ import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
 import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal.tsx';
 import { ForumPage } from './components/ForumPage';
+import StudentPlanEditor from './components/StudentPlanEditor';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useStudyPlan } from './hooks/useStudyPlan';
 import { useRouter, navigate } from './hooks/useRouter';
@@ -142,6 +143,7 @@ function App() {
 
     const isAdminRoute = pathname === '/admin' || hash === '#admin';
     const isForumRoute = pathname === '/foro' || pathname === '/forum';
+    const isProposalsRoute = pathname === '/propuestas' || pathname === '/proposals' || hash === '#propuestas';
     const isVisualizerRoute = pathname === '/visualizador' || pathname === '/visualizer';
 
     if (isAdminRoute) {
@@ -151,6 +153,15 @@ function App() {
     if (isForumRoute) {
         return (
             <ForumPage currentCareer={selectedPlanConfig?.career || 'Ingeniería en Ciencias de la Computación'} />
+        );
+    }
+
+    if (isProposalsRoute) {
+        return (
+            <StudentPlanEditor
+                availablePlans={availablePlans}
+                onGoHome={() => navigate('/')}
+            />
         );
     }
 
@@ -200,6 +211,7 @@ function App() {
             onOpenPlanSelector={() => setIsPlanModalOpen(true)}
             onOpenUpdates={() => setIsUpdatesModalOpen(true)}
             onOpenForum={() => navigate('/foro')}
+            onOpenProposals={() => navigate('/propuestas')}
         >
             <UpdatesModal 
                 isOpen={isUpdatesModalOpen} 

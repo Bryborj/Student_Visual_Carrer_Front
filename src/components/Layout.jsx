@@ -73,6 +73,14 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
                             </span>
                         </button>
+                        <button
+                            onClick={() => onOpenProposals ? onOpenProposals() : navigate('/propuestas')}
+                            aria-label="Gobernanza y Actualización de Planes"
+                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80 relative group"
+                            title="Gobernanza y Actualización de Planes"
+                        >
+                            <span className="material-symbols-outlined text-amber-400">how_to_vote</span>
+                        </button>
                         {onOpenUpdates && (
                             <button
                                 onClick={onOpenUpdates}
