@@ -5,3 +5,5 @@ dist
 .astro
 .vscode
 README.md
+.env.*
+.env

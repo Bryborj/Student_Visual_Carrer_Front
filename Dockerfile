@@ -1,21 +1,23 @@
 # Build stage
 FROM node:22-alpine AS build
-
-RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm
+#RUN corepack enable
+
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm run build
 
 # Production stage with Nginx
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 80 5400
 
 CMD ["nginx", "-g", "daemon off;"]
