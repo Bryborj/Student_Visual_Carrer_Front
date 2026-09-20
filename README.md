@@ -1,138 +1,71 @@
-# Visualizador Interactivo de Plan de Estudios (ICC)
+# Student Visual Carrer - Frontend 🐺
 
-Aplicación web desarrollada en **React.js** que permite visualizar un **plan de estudios universitario** como un **mapa conceptual interactivo**, donde el usuario puede marcar materias aprobadas y el sistema determina automáticamente cuáles puede cursar en el siguiente periodo, respetando prerrequisitos y reglas académicas.
+Aplicación web desarrollada en **React 19 + TypeScript + Vite + Tailwind CSS 4** para la visualización interactiva de mapas curriculares universitarios BUAP, foro comunitario y gobernanza estudiantil con votación en tiempo real.
 
----
-
-## Descripción General
-
-Este proyecto representa un **plan de estudios de Ingeniería en Ciencias de la Computación (ICC)** mediante un grafo visual organizado por semestres.
-El objetivo principal es **ayudar al estudiante a planificar su trayectoria académica** de forma clara, visual y dinámica.
-
-La aplicación funciona **100% en frontend**, sin necesidad de backend.
+Este repositorio corresponde exclusivamente al **Frontend**. El backend complementario se encuentra en [Student_Visual_Carrer_Back](https://github.com/Bryborj/Student_Visual_Carrer_Back).
 
 ---
 
-## Funcionalidades Principales
-
-* Visualización del plan como **mapa conceptual**
-* Marcar / desmarcar materias aprobadas
-* Resaltado automático de materias disponibles
-* Opacidad en materias bloqueadas por prerrequisitos
-* Cálculo automático de créditos aprobados
-* Persistencia del estado del usuario (localStorage)
-* Modo oscuro con TailwindCSS
-* Opción de impresión del mapa académico
-* Diseño responsive
-
----
-
-## Reglas Académicas Soportadas
-
-* Prerrequisitos simples
-* Prerrequisitos múltiples
-* Reglas especiales (ej. **70% de créditos aprobados**)
-* Validación automática en tiempo real
-
----
-
-## Tecnologías Utilizadas
-
-* **React.js** (Vite)
-* **TailwindCSS**
-* JavaScript (ES6+)
-* HTML5 / CSS3
-* LocalStorage (persistencia del lado del cliente)
-
----
-
-## Estructura del Proyecto
+## 🎯 Arquitectura del Proyecto
 
 ```
-src/
- ├─ data/
- │   └─ plan.json               # Plan de estudios
- ├─ logic/
- ├─ components/
- ├─ styles/             
- ├─ App.jsx
- └─ main.jsx
+Student_Visual_Carrer_Front/
+├── src/
+│   ├── components/
+│   │   ├── StudentPlanEditor.tsx  # Panel de actualización de planes y votación comunitaria
+│   │   ├── AdminDashboard.jsx     # Moderación de propuestas y administración
+│   │   ├── ForumPage.tsx          # Foro institucional de discusión
+│   │   ├── ClusterColumn.jsx      # Renderizado de periodos/bloques curriculares
+│   │   ├── SubjectNode.jsx        # Nodos interactivos de materias y prerrequisitos
+│   │   └── WelcomeScreen.jsx      # Pantalla principal y selector de recursos
+│   ├── hooks/
+│   │   ├── useStudyPlan.js        # Lógica de cálculo de créditos y prerrequisitos
+│   │   └── useRouter.tsx          # Enrutamiento SPA ligero
+│   ├── App.jsx                    # Orquestador de vistas (/visualizador, /foro, /propuestas, /admin)
+│   └── index.css                  # Tailwind CSS 4 y estilos globales
+├── vite.config.js                 # Proxy local automático a http://localhost:8000
+├── Dockerfile                     # Nginx multi-stage build para producción
+├── docker-compose.yml             # Despliegue en contenedor (puerto 3000)
+└── package.json                   # Dependencias frontend (React 19, Tailwind 4)
 ```
 
 ---
 
-## Instalación y Ejecución
+## 🚀 Inicio Rápido para Desarrollo
 
 ### Requisitos
-
-* Node.js >= 18
-* npm o yarn
+- Node.js >= 20
+- pnpm >= 9 (o npm)
+- Backend activo en `http://localhost:8000` (Ver [Student_Visual_Carrer_Back](https://github.com/Bryborj/Student_Visual_Carrer_Back))
 
 ### Pasos
+1. **Instalar dependencias:**
+   ```bash
+   pnpm install
+   ```
+2. **Configurar variables de entorno (opcional):**
+   ```bash
+   cp .env.example .env
+   # VITE_API_TARGET=http://localhost:8000
+   ```
+3. **Iniciar en modo desarrollo:**
+   ```bash
+   pnpm dev
+   ```
+   La aplicación se abrirá en `http://localhost:3000`. Todas las peticiones `/api/*` se redirigen automáticamente al backend FastAPI en `http://localhost:8000`.
+
+---
+
+## 🐳 Ejecución con Docker Compose
 
 ```bash
-# Clonar repositorio
-git clone https://github.com/tu-usuario/visualizador-plan-estudios.git
-
-# Entrar al proyecto
-cd visualizador-plan-estudios
-
-# Instalar dependencias
-npm install
-
-# Ejecutar en desarrollo
-npm run dev
+docker compose up --build
 ```
+La aplicación estará disponible en `http://localhost:3000`.
 
 ---
 
-## Modo Oscuro
+## 👥 Trabajo Colaborativo
 
-* Implementado con Tailwind (`dark:`)
-* Preferencia guardada automáticamente
-* Se restaura al recargar la página
-
----
-
-## Impresión
-
-La aplicación incluye un botón **“Imprimir Plan”** que:
-
-* Ajusta colores para fondo blanco
-* Oculta controles interactivos
-* Imprime el mapa tal como el usuario lo visualiza
-
----
-
-## Casos de Uso
-
-* Planeación de carga académica
-* Visualización de avance curricular
-* Simulación de escenarios (“¿qué puedo cursar si apruebo X?”)
-* Herramienta de apoyo para estudiantes y orientación académica
-
----
-
-## Posibles Mejoras Futuras
-
-* Exportación a PDF
-* Guardado en backend
-* Simulación de semestres
-* Comparación entre planes de estudio
-* Drag & drop de materias
-* Autenticación de usuarios
-
----
-
-## Autor
-
-**Bryan A. Borges**
-Est: Ingeniero en Ciencias de la Computación
-Puebla 🇲🇽
-
----
-
-## Licencia
-
-Este proyecto se distribuye bajo la licencia **MIT**.
-Puedes usarlo, modificarlo y adaptarlo libremente.
+- **Si solo trabajas en Frontend:** Clona este repositorio, ejecuta `pnpm dev` y conecta tu variable `VITE_API_TARGET` a tu backend local o a una instancia remota de pruebas.
+- **Si trabajas en Fullstack:** Clona ambos repositorios dentro de una carpeta padre (ej. `Student_Visual_Carrer/`) para desarrollar de forma integrada.
