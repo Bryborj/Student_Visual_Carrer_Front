@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { navigate } from '../hooks/useRouter';
+import PlanEditorPanel from './PlanEditorPanel';
 
 function AdminDashboard() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState('proposals'); // 'proposals' o 'editor'
-    const [jsonInput, setJsonInput] = useState('');
+    const [activeTab, setActiveTab] = useState('editor'); // 'editor' o 'proposals'
     const [status, setStatus] = useState({ type: '', message: '' });
     const [loading, setLoading] = useState(false);
     const [availablePlans, setAvailablePlans] = useState([]);
-    const [selectedPlanToLoad, setSelectedPlanToLoad] = useState('');
     const [proposals, setProposals] = useState([]);
     const [rejectFeedback, setRejectFeedback] = useState({});
 
@@ -39,58 +38,6 @@ function AdminDashboard() {
         }
     }, [isAuthenticated]);
 
-    const handleLoadPlan = async () => {
-        if (!selectedPlanToLoad) return;
-        setLoading(true);
-        setStatus({ type: '', message: '' });
-        try {
-            const [career, modalidad] = selectedPlanToLoad.split('|');
-            let url = `/api/plan?career=${encodeURIComponent(career)}`;
-            if (modalidad && modalidad !== 'null' && modalidad !== 'undefined') {
-                url += `&modalidad=${encodeURIComponent(modalidad)}`;
-            }
-            const res = await fetch(url);
-            if (res.ok) {
-                const data = await res.json();
-                delete data._id; // Delete internal Database ID
-                setJsonInput(JSON.stringify(data, null, 2));
-                setStatus({ type: 'success', message: 'Plan cargado correctamente. Puedes editarlo abajo.' });
-            } else {
-                setStatus({ type: 'error', message: 'Error al cargar el plan.' });
-            }
-        } catch (error) {
-            setStatus({ type: 'error', message: 'Error de conexión.' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDownloadJson = () => {
-        try {
-            JSON.parse(jsonInput);
-            const blob = new Blob([jsonInput], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            
-            let filename = 'study_plan.json';
-            try {
-                const parsed = JSON.parse(jsonInput);
-                if (parsed.career) {
-                    filename = `Plan_${parsed.career.replace(/\s+/g, '_')}.json`;
-                }
-            } catch (e) {}
-
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch (e) {
-            setStatus({ type: 'error', message: 'El JSON es inválido, no se puede descargar.' });
-        }
-    };
-
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -117,41 +64,6 @@ function AdminDashboard() {
         }
     };
 
-    const handleAddPlan = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setStatus({ type: '', message: '' });
-
-        let payload;
-        try {
-            payload = JSON.parse(jsonInput);
-        } catch (e) {
-            setStatus({ type: 'error', message: 'JSON inválido. Por favor revisa el formato.' });
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'addPlan', password, payload })
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                setStatus({ type: 'success', message: data.message });
-                setJsonInput('');
-                loadAdminData();
-            } else {
-                setStatus({ type: 'error', message: data.detail || data.error || 'Error al guardar el plan' });
-            }
-        } catch (error) {
-            setStatus({ type: 'error', message: 'Error de conexión' });
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleApproveProposal = async (proposalId) => {
         if (!confirm('¿Deseas aprobar esta propuesta y actualizar inmediatamente el plan oficial en vivo?')) return;
@@ -261,6 +173,16 @@ function AdminDashboard() {
                 {/* Tabs */}
                 <div className="flex border-b border-outline-variant/30 gap-6">
                     <button
+                        onClick={() => setActiveTab('editor')}
+                        className={`pb-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                            activeTab === 'editor'
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                        }`}
+                    >
+                        <span>⚙️</span> Gestión y Edición de Planes
+                    </button>
+                    <button
                         onClick={() => setActiveTab('proposals')}
                         className={`pb-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
                             activeTab === 'proposals'
@@ -270,19 +192,18 @@ function AdminDashboard() {
                     >
                         <span>🗳️</span> Propuestas de Alumnos ({proposals.filter(p => p.status === 'voting').length} pendientes)
                     </button>
-                    <button
-                        onClick={() => setActiveTab('editor')}
-                        className={`pb-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
-                            activeTab === 'editor'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-on-surface-variant hover:text-on-surface'
-                        }`}
-                    >
-                        <span>⚙️</span> Editor Manual de Planes (JSON)
-                    </button>
                 </div>
 
-                {/* Tab 1: Proposals Moderation */}
+                {/* Tab 1: Interactive Plan Editor Panel */}
+                {activeTab === 'editor' && (
+                    <PlanEditorPanel
+                        password={password}
+                        availablePlans={availablePlans}
+                        onPlanSaved={() => loadAdminData()}
+                    />
+                )}
+
+                {/* Tab 2: Proposals Moderation */}
                 {activeTab === 'proposals' && (
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
@@ -306,7 +227,7 @@ function AdminDashboard() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                                                    {p.career} ({p.modalidad})
+                                                    {p.career}
                                                 </span>
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                                                     p.status === 'voting' ? 'bg-blue-500/10 text-blue-400' :
@@ -360,77 +281,6 @@ function AdminDashboard() {
                                 </div>
                             ))
                         )}
-                    </div>
-                )}
-
-                {/* Tab 2: Manual JSON Editor */}
-                {activeTab === 'editor' && (
-                    <div className="space-y-6">
-                        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-primary/10">
-                            <h2 className="text-xl font-bold text-on-surface mb-4">Cargar Plan Existente</h2>
-                            <div className="flex flex-col sm:flex-row gap-4 items-end">
-                                <div className="flex-1 w-full">
-                                    <label className="block text-sm font-medium text-on-surface/70 mb-1">Selecciona un plan en base de datos</label>
-                                    <select 
-                                        className="w-full px-4 py-2.5 rounded-xl bg-background border border-primary/20 text-on-surface focus:outline-none focus:border-primary"
-                                        value={selectedPlanToLoad}
-                                        onChange={e => setSelectedPlanToLoad(e.target.value)}
-                                    >
-                                        <option value="">-- Seleccionar un plan en BD --</option>
-                                        {availablePlans.map(p => (
-                                            <option key={`${p.career}|${p.modalidad}`} value={`${p.career}|${p.modalidad}`}>
-                                                {p.career} {p.modalidad ? `(${p.modalidad})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <button 
-                                    onClick={handleLoadPlan}
-                                    disabled={!selectedPlanToLoad || loading}
-                                    className="w-full sm:w-auto px-6 py-2.5 bg-secondary text-on-secondary rounded-xl font-medium hover:bg-secondary/90 disabled:opacity-50"
-                                >
-                                    Cargar JSON
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-primary/10">
-                            <h2 className="text-xl font-bold text-on-surface mb-4">Editor de JSON</h2>
-                            <form onSubmit={handleAddPlan} className="space-y-4">
-                                <div>
-                                    <textarea
-                                        value={jsonInput}
-                                        onChange={(e) => setJsonInput(e.target.value)}
-                                        className="w-full h-96 px-4 py-3 rounded-xl bg-background border border-primary/20 text-on-surface font-mono text-sm focus:outline-none focus:border-primary"
-                                        placeholder='{\n  "career": "Ingeniería en Software",\n  "modalidad": "Línea",\n  "faculty": "Facultad de Ciencias de la Computación",\n  "courses": [...]\n}'
-                                        required
-                                    />
-                                </div>
-                                {status.message && (
-                                    <div className={`p-4 rounded-xl text-sm ${status.type === 'error' ? 'bg-error/10 text-error' : 'bg-green-500/10 text-green-500'}`}>
-                                        {status.message}
-                                    </div>
-                                )}
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <button
-                                        type="submit"
-                                        disabled={loading || !jsonInput.trim()}
-                                        className="flex-1 py-3 px-8 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary/90 disabled:opacity-50"
-                                    >
-                                        {loading ? 'Guardando...' : 'Guardar Cambios en BD'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleDownloadJson}
-                                        disabled={!jsonInput.trim()}
-                                        className="flex-1 py-3 px-8 bg-surface-container-high text-on-surface rounded-xl font-medium border border-outline-variant hover:bg-surface-container-highest disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">download</span>
-                                        Descargar JSON
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
                     </div>
                 )}
             </div>

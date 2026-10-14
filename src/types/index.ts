@@ -21,7 +21,6 @@ export interface PlanData {
   _id?: string;
   career: string;
   faculty?: string;
-  modalidad?: string;
   subjects?: Subject[];
   levels?: PlanLevel[];
   [key: string]: any;
@@ -30,7 +29,6 @@ export interface PlanData {
 export interface PlanOption {
   career: string;
   faculty?: string;
-  modalidad?: string;
 }
 
 export interface StudyPlanStats {

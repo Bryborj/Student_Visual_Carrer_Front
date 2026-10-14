@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import ClusterColumn from './components/ClusterColumn';
-import VerifyEmail from './components/VerifyEmail';
 import AdminDashboard from './components/AdminDashboard';
 import PlanSelector from './components/PlanSelector';
 import UpdatesModal, { CURRENT_VERSION } from './components/UpdatesModal.tsx';
@@ -13,7 +12,6 @@ import { useRouter, navigate } from './hooks/useRouter';
 
 function App() {
     const { pathname, hash } = useRouter();
-    const [isVerified, setIsVerified] = useState(false);
     
     const [availablePlans, setAvailablePlans] = useState([]);
     const [selectedPlanConfig, setSelectedPlanConfigState] = useState(null);
@@ -47,7 +45,7 @@ function App() {
                         try {
                             const parsed = JSON.parse(savedPlan);
                             // Validate that it exists in the fetched plans
-                            const exists = data.find(p => p.career === parsed.career && p.faculty === parsed.faculty && p.modalidad === parsed.modalidad);
+                            const exists = data.find(p => p.career === parsed.career && (parsed.faculty ? p.faculty === parsed.faculty : true));
                             if (exists) {
                                 setSelectedPlanConfigState(parsed);
                                 
@@ -94,15 +92,12 @@ function App() {
             document.documentElement.classList.remove('dark');
         }
 
-        // Verificar sesión guardada
+        // Limpiar sesiones expiradas si existían
         const storedSession = localStorage.getItem('auth_session') || sessionStorage.getItem('auth_session');
         if (storedSession) {
             try {
                 const data = JSON.parse(storedSession);
-                if (data.expiresAt === 'indefinite' || (data.expiresAt && Date.now() < data.expiresAt)) {
-                    setIsVerified(true);
-                } else {
-                    // Limpiar si expiró
+                if (data.expiresAt !== 'indefinite' && data.expiresAt && Date.now() >= data.expiresAt) {
                     localStorage.removeItem('auth_session');
                     sessionStorage.removeItem('auth_session');
                 }
@@ -112,34 +107,7 @@ function App() {
         }
     }, []);
 
-    const handleVerification = (email, saveSession, duration) => {
-        setIsVerified(true);
-
-        const sessionData = {
-            email,
-            verifiedAt: Date.now()
-        };
-
-        if (saveSession) {
-            if (duration === 'indefinite') {
-                sessionData.expiresAt = 'indefinite';
-            } else {
-                const days = parseInt(duration, 10);
-                if (!isNaN(days)) {
-                    sessionData.expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
-                } else {
-                    sessionData.expiresAt = 'indefinite';
-                }
-            }
-            localStorage.setItem('auth_session', JSON.stringify(sessionData));
-        } else {
-            // Guardar solo por la sesión (hasta cerrar la pestaña/navegador)
-            sessionData.expiresAt = 'session';
-            sessionStorage.setItem('auth_session', JSON.stringify(sessionData));
-        }
-    };
-
-    const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan(selectedPlanConfig?.career, selectedPlanConfig?.modalidad);
+    const { planData, loading, error, passedSubjects, toggleSubject, resetPlan, getSubjectStatus, stats } = useStudyPlan(selectedPlanConfig?.career);
 
     const isAdminRoute = pathname === '/admin' || hash === '#admin';
     const isForumRoute = pathname === '/foro' || pathname === '/forum';
@@ -174,14 +142,6 @@ function App() {
                     onClose={handleCloseUpdates} 
                 />
             </>
-        );
-    }
-
-    if (!isVerified) {
-        return (
-            <div className="min-h-screen bg-background">
-                <VerifyEmail onVerified={handleVerification} onBack={() => navigate('/')} />
-            </div>
         );
     }
 
@@ -224,7 +184,12 @@ function App() {
                 selected={selectedPlanConfig} 
                 onChange={setSelectedPlanConfig} 
             />
-            <div className="grid-container px-4 md:px-grid-margin py-4 md:py-8 max-w-container-max-width mx-auto gap-0 print:p-0">
+            <div 
+                className="grid-container px-4 md:px-grid-margin py-4 md:py-8 max-w-container-max-width mx-auto gap-0 print:p-0"
+                style={{
+                    gridTemplateColumns: `repeat(${planData?.courses?.length || 9}, minmax(200px, 1fr))`
+                }}
+            >
                 {planData.courses.map(cluster => (
                     <ClusterColumn
                         key={cluster.cluster}

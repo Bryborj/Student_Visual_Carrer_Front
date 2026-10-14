@@ -9,7 +9,6 @@ interface StudentPlanEditorProps {
 interface Proposal {
     id: string;
     career: string;
-    modalidad: string;
     author: string;
     emailHash: string;
     reason: string;
@@ -53,7 +52,6 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
     const [selectedCareer, setSelectedCareer] = useState<string>(
         availablePlans.length > 0 ? availablePlans[0].career : 'Ingeniería en Ciencias de la Computación'
     );
-    const [selectedModalidad, setSelectedModalidad] = useState<string>('Escolarizada');
     const [reason, setReason] = useState<string>('');
     const [jsonCourses, setJsonCourses] = useState<string>('[]');
     const [jsonElectives, setJsonElectives] = useState<string>('[]');
@@ -95,7 +93,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
         setLoading(true);
         setProposalStatus({ type: '', message: '' });
         try {
-            const res = await fetch(`/api/plan?career=${encodeURIComponent(selectedCareer)}&modalidad=${encodeURIComponent(selectedModalidad)}`);
+            const res = await fetch(`/api/plan?career=${encodeURIComponent(selectedCareer)}`);
             if (res.ok) {
                 const data = await res.json();
                 setJsonCourses(JSON.stringify(data.courses || [], null, 2));
@@ -187,7 +185,6 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                 },
                 body: JSON.stringify({
                     career: selectedCareer,
-                    modalidad: selectedModalidad,
                     username: user.username,
                     emailHash: user.emailHash,
                     reason,
@@ -450,9 +447,6 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                         <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                                                        {p.modalidad}
-                                                    </span>
                                                     {p.status === 'voting' && (
                                                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
                                                             En Votación 🗳️

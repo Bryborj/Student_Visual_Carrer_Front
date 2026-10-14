@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { normalizeData, isSubjectAvailable, getTotalPlanCredits, getPassedCredits } from '../utils/academicLogic';
 
-export const useStudyPlan = (career, modalidad) => {
+export const useStudyPlan = (career) => {
     const [planData, setPlanData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -12,9 +12,7 @@ export const useStudyPlan = (career, modalidad) => {
         const fetchPlan = async () => {
             setLoading(true);
             try {
-                // In local dev, you may need a Vite proxy. In Vercel, this works natively.
-                let url = `/api/plan?career=${encodeURIComponent(career)}`;
-                if (modalidad) url += `&modalidad=${encodeURIComponent(modalidad)}`;
+                const url = `/api/plan?career=${encodeURIComponent(career)}`;
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error('No se pudo cargar el plan de estudios.');
@@ -29,7 +27,7 @@ export const useStudyPlan = (career, modalidad) => {
             }
         };
         fetchPlan();
-    }, [career, modalidad]);
+    }, [career]);
 
     // 2. Normalize Data (Memoized)
     const { subjectsByName, unlockToName } = useMemo(() => {
@@ -42,26 +40,28 @@ export const useStudyPlan = (career, modalidad) => {
         return getTotalPlanCredits(planData);
     }, [planData]);
 
-    // 3. State Initialization from LocalStorage
-    const STORAGE_KEY = `academic_plan_passed_subjects_${career}_${modalidad || 'default'}`;
-    const [passedSubjects, setPassedSubjects] = useState(() => {
+    // 3. State Initialization from LocalStorage with legacy migration
+    const STORAGE_KEY = `academic_plan_passed_subjects_${career}`;
+    const getStoredSubjects = () => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            return stored ? JSON.parse(stored) : [];
+            if (stored) return JSON.parse(stored);
+            // Migración transparente si existía guardado con modalidad en versiones previas
+            const legacy = localStorage.getItem(`academic_plan_passed_subjects_${career}_Escolarizada`) ||
+                           localStorage.getItem(`academic_plan_passed_subjects_${career}_default`);
+            if (legacy) return JSON.parse(legacy);
+            return [];
         } catch (e) {
             console.error("Failed to load state", e);
             return [];
         }
-    });
+    };
 
-    // Reset passedSubjects state when career/modalidad changes
+    const [passedSubjects, setPassedSubjects] = useState(getStoredSubjects);
+
+    // Reset passedSubjects state when career changes
     useEffect(() => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            setPassedSubjects(stored ? JSON.parse(stored) : []);
-        } catch(e) {
-            setPassedSubjects([]);
-        }
+        setPassedSubjects(getStoredSubjects());
     }, [STORAGE_KEY]);
 
     // 4. Persistence

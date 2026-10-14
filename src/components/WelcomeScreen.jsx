@@ -193,6 +193,7 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                     <div className="flex gap-8">
                         <Link to="/visualizador" className="font-label-md text-xs text-on-surface-variant hover:text-primary transition-colors">Visualizador</Link>
                         <Link to="/foro" className="font-label-md text-xs text-on-surface-variant hover:text-primary transition-colors">Foro</Link>
+                        <Link to="/admin" className="font-label-md text-xs text-on-surface-variant hover:text-primary transition-colors">Admin Staff</Link>
                         <a className="font-label-md text-xs text-on-surface-variant hover:text-primary transition-colors" href="https://github.com/Bryborj" target="_blank" rel="noopener noreferrer">Contacto</a>
                     </div>
                 </div>

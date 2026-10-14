@@ -104,7 +104,7 @@
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(9, minmax(200px, 1fr));
+    grid-template-columns: repeat(var(--num-semesters, 9), minmax(200px, 1fr));
     gap: var(--spacing-column-gutter, 1rem);
     overflow-x: auto;
     min-height: calc(100vh - 140px);
