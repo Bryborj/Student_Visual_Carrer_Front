@@ -23,9 +23,9 @@ Student_Visual_Carrer_Front/
 │   │   └── useRouter.tsx          # Enrutamiento SPA ligero
 │   ├── App.jsx                    # Orquestador de vistas (/visualizador, /foro, /propuestas, /admin)
 │   └── index.css                  # Tailwind CSS 4 y estilos globales
-├── vite.config.js                 # Proxy local automático a http://localhost:8000
+├── vite.config.js                 # Proxy local automático a http://localhost:8001
 ├── Dockerfile                     # Nginx multi-stage build para producción
-├── docker-compose.yml             # Despliegue en contenedor (puerto 3000)
+├── docker-compose.yml             # Despliegue en contenedor (puerto 5400)
 └── package.json                   # Dependencias frontend (React 19, Tailwind 4)
 ```
 
@@ -36,7 +36,7 @@ Student_Visual_Carrer_Front/
 ### Requisitos
 - Node.js >= 20
 - pnpm >= 9 (o npm)
-- Backend activo en `http://localhost:8000` (Ver [Student_Visual_Carrer_Back](https://github.com/Bryborj/Student_Visual_Carrer_Back))
+- Backend activo en `http://localhost:8001` (Ver [Student_Visual_Carrer_Back](https://github.com/Bryborj/Student_Visual_Carrer_Back))
 
 ### Pasos
 1. **Instalar dependencias:**
@@ -46,13 +46,13 @@ Student_Visual_Carrer_Front/
 2. **Configurar variables de entorno (opcional):**
    ```bash
    cp .env.example .env
-   # VITE_API_TARGET=http://localhost:8000
+   # VITE_API_TARGET=http://localhost:8001
    ```
 3. **Iniciar en modo desarrollo:**
    ```bash
    pnpm dev
    ```
-   La aplicación se abrirá en `http://localhost:3000`. Todas las peticiones `/api/*` se redirigen automáticamente al backend FastAPI en `http://localhost:8000`.
+   La aplicación se abrirá en `http://localhost:5400`. Todas las peticiones `/api/*` se redirigen automáticamente al backend FastAPI en `http://localhost:8001` (configurable con `VITE_API_TARGET`).
 
 ---
 
@@ -61,7 +61,7 @@ Student_Visual_Carrer_Front/
 ```bash
 docker compose up --build
 ```
-La aplicación estará disponible en `http://localhost:3000`.
+La aplicación estará disponible en `http://localhost:5400` (también en el puerto 80 dentro del contenedor). Nginx reenvía `/api/*` a `http://host.docker.internal:8001`, por lo que el backend debe estar corriendo en el host (ver `nginx.conf`).
 
 ---
 
