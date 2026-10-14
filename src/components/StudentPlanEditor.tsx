@@ -124,9 +124,13 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
         }
 
         try {
+            const token = localStorage.getItem('forum_token');
             const res = await fetch(`/api/proposals/${proposalId}/vote`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     username: user.username,
                     emailHash: user.emailHash,
@@ -174,9 +178,13 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
         setProposalStatus({ type: '', message: '' });
 
         try {
+            const token = localStorage.getItem('forum_token');
             const res = await fetch('/api/proposals', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     career: selectedCareer,
                     modalidad: selectedModalidad,
@@ -260,6 +268,9 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
             const data = await res.json();
             if (res.ok) {
                 localStorage.setItem('forum_session', JSON.stringify(data.user));
+                if (data.token) {
+                    localStorage.setItem('forum_token', data.token);
+                }
                 setUser(data.user);
                 setShowAuthModal(false);
             } else {
@@ -290,6 +301,9 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
             const data = await res.json();
             if (res.ok) {
                 localStorage.setItem('forum_session', JSON.stringify(data.user));
+                if (data.token) {
+                    localStorage.setItem('forum_token', data.token);
+                }
                 setUser(data.user);
                 setShowAuthModal(false);
             } else {
@@ -332,6 +346,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                             <button
                                 onClick={() => {
                                     localStorage.removeItem('forum_session');
+                                    localStorage.removeItem('forum_token');
                                     setUser(null);
                                 }}
                                 className="text-xs text-on-surface-variant hover:text-error transition-colors ml-1"

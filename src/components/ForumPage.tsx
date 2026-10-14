@@ -178,6 +178,9 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier√
       const data = await res.json();
       if (res.ok && data.user) {
         localStorage.setItem('forum_session', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('forum_token', data.token);
+        }
         setForumUser(data.user);
         setShowAuthView(false);
         setRegEmail('');
@@ -219,6 +222,9 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier√
       const data = await res.json();
       if (res.ok && data.user) {
         localStorage.setItem('forum_session', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('forum_token', data.token);
+        }
         setForumUser(data.user);
         setShowAuthView(false);
         setLoginIdentifier('');
@@ -235,6 +241,7 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier√
 
   const handleLogout = () => {
     localStorage.removeItem('forum_session');
+    localStorage.removeItem('forum_token');
     setForumUser(null);
   };
 
@@ -266,9 +273,13 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier√
     setNewContent('');
 
     try {
+      const token = localStorage.getItem('forum_token');
       await fetch('/api/forum', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           action: 'create_post',
           title: newTitle,
@@ -307,10 +318,14 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier√
     }));
 
     if (!post._id?.startsWith('temp-') && !post._id?.startsWith('mock-')) {
+      const token = localStorage.getItem('forum_token');
       try {
         await fetch('/api/forum', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({
             action: 'like_post',
             postId: post._id,
@@ -350,10 +365,14 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier√
     setCommentText('');
 
     if (!postId.startsWith('temp-') && !postId.startsWith('mock-')) {
+      const token = localStorage.getItem('forum_token');
       try {
         await fetch('/api/forum', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({
             action: 'add_comment',
             postId,
