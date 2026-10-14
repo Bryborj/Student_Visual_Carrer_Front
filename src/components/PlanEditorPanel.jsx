@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { navigate } from '../hooks/useRouter';
 
-export default function PlanEditorPanel({ password, availablePlans = [], onPlanSaved }) {
+export default function PlanEditorPanel({ password, availablePlans = [], onPlanSaved, initialCareer = '' }) {
     // Modo: 'modify' (modificar existente) o 'create' (crear nuevo)
     const [editorMode, setEditorMode] = useState('modify');
     const [selectedCareerToLoad, setSelectedCareerToLoad] = useState('');
@@ -49,9 +49,13 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
         if (editorMode === 'create' && courses.length === 0) {
             initBlankPlan(9);
         } else if (editorMode === 'modify' && availablePlans.length > 0 && !selectedCareerToLoad) {
-            setSelectedCareerToLoad(availablePlans[0].career);
+            const careerToPick = (initialCareer && availablePlans.some(p => p.career === initialCareer))
+                ? initialCareer
+                : availablePlans[0].career;
+            setSelectedCareerToLoad(careerToPick);
+            handleLoadPlan(careerToPick);
         }
-    }, [editorMode, availablePlans]);
+    }, [editorMode, availablePlans, initialCareer]);
 
     // Cargar plan existente seleccionado
     const handleLoadPlan = async (careerName) => {

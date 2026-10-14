@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { navigate } from '../hooks/useRouter';
+import NavigationDrawer from './NavigationDrawer';
 
-const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url = "", headerControls = null, onOpenPlanSelector, onOpenUpdates, onOpenForum, onGoHome }) => {
+const Layout = ({ 
+    children, 
+    stats, 
+    onReset, 
+    title = "Plan de Estudios", 
+    logo_url = "", 
+    headerControls = null, 
+    onOpenPlanSelector, 
+    onOpenUpdates, 
+    onOpenForum, 
+    onOpenProposals,
+    onOpenAdmin,
+    onGoHome 
+}) => {
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -27,112 +42,94 @@ const Layout = ({ children, stats, onReset, title = "Plan de Estudios", logo_url
     return (
         <div className="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col transition-colors duration-300">
             {/* Header - No Print */}
-            <header className="bg-background border-b border-outline-variant sticky top-0 z-50 print:hidden transition-colors duration-300">
-                <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 md:px-grid-margin py-4 max-w-container-max-width mx-auto gap-4">
-                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 w-full md:w-auto text-center md:text-left">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 flex items-center justify-center rounded">
+            <header className="bg-background border-b border-outline-variant sticky top-0 z-40 print:hidden transition-colors duration-300 shadow-xs">
+                <div className="flex flex-col sm:flex-row justify-between items-center w-full px-4 md:px-grid-margin py-3.5 max-w-container-max-width mx-auto gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                        <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container p-1 shrink-0 border border-outline-variant/30">
+                            {logo_url ? (
                                 <img src={logo_url} alt="Logo" className="w-full h-full object-contain" />
-                            </div>
-                            <div className="flex flex-col items-start w-full max-w-xs sm:max-w-md">
-                                <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">{title}</h1>
-                                {headerControls}
-                            </div>
+                            ) : (
+                                <span className="material-symbols-outlined text-primary text-2xl">school</span>
+                            )}
                         </div>
-                        <div className="bg-surface-container px-3 py-1 rounded-full flex items-center gap-2 border border-outline-variant w-fit mx-auto md:mx-0">
-                            <span className="text-metadata-label font-metadata-label text-on-surface-variant">
-                                {Math.round(stats.passedCredits)} / {stats.totalCredits} <span className="hidden sm:inline">Créditos</span>
-                            </span>
-                            <div className="w-16 sm:w-24 h-2 bg-surface-variant rounded-full overflow-hidden">
-                                <div className="h-full bg-tertiary" style={{ width: `${stats.percentage}%` }}></div>
-                            </div>
-                            <span className="text-metadata-label font-metadata-label text-tertiary">
-                                ({Math.round(stats.percentage)}%)
-                            </span>
+                        <div className="flex flex-col items-start min-w-0">
+                            <h1 className="font-display-title text-xl sm:text-2xl font-bold text-on-surface leading-tight truncate max-w-xs sm:max-w-md lg:max-w-lg">
+                                {title}
+                            </h1>
+                            {headerControls}
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto">
-                        <button
-                            onClick={() => onGoHome ? onGoHome() : navigate('/')}
-                            aria-label="Volver al Portal"
-                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
-                            title="Volver a la Pantalla de Bienvenida"
-                        >
-                            <span className="material-symbols-outlined text-blue-500">other_houses</span>
-                        </button>
-                        <button
-                            onClick={() => onOpenForum ? onOpenForum() : navigate('/foro')}
-                            aria-label="Foro Comunidad BUAP"
-                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80 relative group"
-                            title="Foro Comunidad BUAP"
-                        >
-                            <span className="material-symbols-outlined text-purple-400">forum</span>
-                            <span className="absolute top-1 right-1 flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                        {/* Indicador de Créditos Compacto */}
+                        <div className="bg-surface-container px-3 py-1.5 rounded-full flex items-center gap-2 border border-outline-variant/40">
+                            <span className="text-metadata-label font-metadata-label text-on-surface-variant">
+                                {Math.round(stats.passedCredits)} / {stats.totalCredits} <span className="hidden md:inline">Créditos</span>
                             </span>
-                        </button>
-                        <button
-                            onClick={() => onOpenProposals ? onOpenProposals() : navigate('/propuestas')}
-                            aria-label="Gobernanza y Actualización de Planes"
-                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80 relative group"
-                            title="Gobernanza y Actualización de Planes"
-                        >
-                            <span className="material-symbols-outlined text-amber-400">how_to_vote</span>
-                        </button>
-                        {onOpenUpdates && (
-                            <button
-                                onClick={onOpenUpdates}
-                                aria-label="Novedades"
-                                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
-                                title="Novedades y Actualizaciones"
-                            >
-                                <span className="material-symbols-outlined text-[#10b981]">campaign</span>
-                            </button>
-                        )}
-                        {onOpenPlanSelector && (
-                            <button
-                                onClick={onOpenPlanSelector}
-                                aria-label="Cambiar Carrera"
-                                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
-                                title="Cambiar Carrera"
-                            >
-                                <span className="material-symbols-outlined text-primary">school</span>
-                            </button>
-                        )}
-
-                        <button
-                            onClick={onReset}
-                            aria-label="Reiniciar"
-                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
-                            title="Reiniciar"
-                        >
-                            <span className="material-symbols-outlined text-error">refresh</span>
-                        </button>
-
-                        <button
-                            onClick={handlePrint}
-                            aria-label="Imprimir"
-                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
-                            title="Imprimir"
-                        >
-                            <span className="material-symbols-outlined">print</span>
-                        </button>
-
-                        <button
-                            onClick={() => setDarkMode(!darkMode)}
-                            aria-label="Modo Claro/Oscuro"
-                            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:opacity-80"
-                            title="Alternar Modo Oscuro"
-                        >
-                            <span className="material-symbols-outlined text-[#f59e0b]">
-                                {darkMode ? 'light_mode' : 'dark_mode'}
+                            <div className="w-14 sm:w-20 h-2 bg-surface-variant rounded-full overflow-hidden">
+                                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${stats.percentage}%` }}></div>
+                            </div>
+                            <span className="text-metadata-label font-metadata-label font-bold text-primary">
+                                {Math.round(stats.percentage)}%
                             </span>
-                        </button>
+                        </div>
+
+                        {/* Botones Rápidos y Menú Hamburguesa */}
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            <button
+                                onClick={handlePrint}
+                                aria-label="Imprimir mapa curricular"
+                                className="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                                title="Imprimir o exportar PDF"
+                            >
+                                <span className="material-symbols-outlined text-xl">print</span>
+                            </button>
+
+                            <button
+                                onClick={() => setDarkMode(!darkMode)}
+                                aria-label="Alternar modo claro u oscuro"
+                                className="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                                title={darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+                            >
+                                <span className="material-symbols-outlined text-xl text-amber-500">
+                                    {darkMode ? 'light_mode' : 'dark_mode'}
+                                </span>
+                            </button>
+
+                            {/* Botón Principal de Menú Hamburguesa */}
+                            <button
+                                onClick={() => setIsDrawerOpen(true)}
+                                aria-label="Abrir menú de navegación"
+                                aria-expanded={isDrawerOpen}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/40 transition-all active:scale-95 shadow-xs"
+                                title="Menú de Navegación y Herramientas"
+                            >
+                                <span className="material-symbols-outlined text-xl text-primary">menu</span>
+                                <span className="text-xs font-semibold tracking-wide hidden sm:inline">Menú</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
+
+            {/* Navigation Drawer Lateral */}
+            <NavigationDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                currentCareer={title}
+                stats={stats}
+                onGoHome={onGoHome}
+                onOpenPlanSelector={onOpenPlanSelector}
+                onOpenForum={onOpenForum}
+                onOpenProposals={onOpenProposals}
+                onOpenAdmin={onOpenAdmin || (() => navigate('/admin'))}
+                onOpenUpdates={onOpenUpdates}
+                onReset={onReset}
+                onPrint={handlePrint}
+                darkMode={darkMode}
+                onToggleDarkMode={() => setDarkMode(!darkMode)}
+                activeRoute="visualizer"
+            />
 
             {/* Main Content */}
             <main className="flex-1 overflow-auto relative print:overflow-visible">

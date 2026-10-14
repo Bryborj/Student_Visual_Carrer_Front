@@ -115,7 +115,14 @@ function App() {
     const isVisualizerRoute = pathname === '/visualizador' || pathname === '/visualizer';
 
     if (isAdminRoute) {
-        return <AdminDashboard />;
+        return (
+            <AdminDashboard 
+                initialCareer={selectedPlanConfig?.career || ''}
+                onPlanSaved={() => {
+                    fetch('/api/plans-list').then(r => r.json()).then(setAvailablePlans).catch(console.error);
+                }}
+            />
+        );
     }
 
     if (isForumRoute) {
@@ -172,6 +179,7 @@ function App() {
             onOpenUpdates={() => setIsUpdatesModalOpen(true)}
             onOpenForum={() => navigate('/foro')}
             onOpenProposals={() => navigate('/propuestas')}
+            onOpenAdmin={() => navigate('/admin')}
         >
             <UpdatesModal 
                 isOpen={isUpdatesModalOpen} 

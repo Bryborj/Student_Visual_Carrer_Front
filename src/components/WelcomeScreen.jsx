@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from '../hooks/useRouter';
+import { Link, navigate } from '../hooks/useRouter';
+import NavigationDrawer from './NavigationDrawer';
 
 const WelcomeScreen = ({ availablePlansCount = 0 }) => {
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -23,7 +25,7 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
     return (
         <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col justify-between relative overflow-x-hidden transition-colors duration-300">
             {/* Header Navigation */}
-            <header className="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 transition-colors duration-300">
+            <header className="fixed top-0 w-full z-40 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 transition-colors duration-300">
                 <nav className="flex justify-between items-center px-4 sm:px-8 py-4 max-w-7xl mx-auto">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center shadow-sm">
@@ -34,25 +36,53 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                             <span className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest mt-1">Portal Académico</span>
                         </div>
                     </div>
-                    <div className="hidden md:flex items-center gap-10">
+                    <div className="hidden md:flex items-center gap-8">
                         <Link to="/visualizador" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Visualizador</Link>
                         <Link to="/foro" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Foro</Link>
                         <Link to="/propuestas" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Actualizar Plan</Link>
+                        <Link to="/admin" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200 flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-base text-primary">tune</span>
+                            Gestión de Planes
+                        </Link>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <button
                             onClick={() => setDarkMode(!darkMode)}
                             aria-label="Alternar Modo Oscuro"
-                            className="p-2 rounded-lg hover:bg-surface-container-high transition-colors duration-200 text-on-surface-variant hover:text-on-surface"
+                            className="p-2 rounded-xl hover:bg-surface-container-high transition-colors duration-200 text-on-surface-variant hover:text-on-surface"
                             title={darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
                         >
                             <span className="material-symbols-outlined text-primary text-xl">
                                 {darkMode ? 'light_mode' : 'dark_mode'}
                             </span>
                         </button>
+
+                        <button
+                            onClick={() => setIsDrawerOpen(true)}
+                            aria-label="Abrir menú de navegación"
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/40 transition-all active:scale-95 shadow-xs"
+                            title="Menú de Navegación"
+                        >
+                            <span className="material-symbols-outlined text-xl text-primary">menu</span>
+                            <span className="text-xs font-semibold tracking-wide hidden sm:inline">Menú</span>
+                        </button>
                     </div>
                 </nav>
             </header>
+
+            {/* Navigation Drawer */}
+            <NavigationDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                currentCareer=""
+                onGoHome={() => navigate('/')}
+                onOpenForum={() => navigate('/foro')}
+                onOpenProposals={() => navigate('/propuestas')}
+                onOpenAdmin={() => navigate('/admin')}
+                darkMode={darkMode}
+                onToggleDarkMode={() => setDarkMode(!darkMode)}
+                activeRoute="home"
+            />
 
             <main className="relative pt-32 pb-16 flex-1 flex flex-col justify-center">
                 {/* Subtle Background Elements */}

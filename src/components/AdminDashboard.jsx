@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { navigate } from '../hooks/useRouter';
 import PlanEditorPanel from './PlanEditorPanel';
 
-function AdminDashboard() {
+function AdminDashboard({ initialCareer = '', onPlanSaved }) {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [activeTab, setActiveTab] = useState('editor'); // 'editor' o 'proposals'
@@ -143,12 +143,21 @@ function AdminDashboard() {
                             {loading ? 'Verificando...' : 'Entrar al Panel'}
                         </button>
                     </form>
-                    <button 
-                        onClick={() => navigate('/')} 
-                        className="mt-6 w-full text-center text-sm text-primary hover:underline"
-                    >
-                        Volver al Portal
-                    </button>
+                    <div className="mt-6 flex flex-col gap-2">
+                        <button 
+                            onClick={() => navigate('/visualizador')} 
+                            className="w-full py-2.5 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-primary transition-colors flex items-center justify-center gap-2 border border-outline-variant/30"
+                        >
+                            <span className="material-symbols-outlined text-base">account_tree</span>
+                            Ir al Visualizador de Materias
+                        </button>
+                        <button 
+                            onClick={() => navigate('/')} 
+                            className="w-full text-center text-xs text-on-surface-variant hover:text-primary hover:underline py-1"
+                        >
+                            Volver al Portal de Inicio
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -157,17 +166,26 @@ function AdminDashboard() {
     return (
         <div className="min-h-screen bg-background p-4 md:p-8 text-on-surface">
             <div className="max-w-5xl mx-auto space-y-6">
-                <div className="flex justify-between items-center bg-surface p-6 rounded-2xl shadow-sm border border-primary/10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-surface p-6 rounded-2xl shadow-sm border border-primary/10 gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-on-surface">Panel de Control de Staff</h1>
                         <p className="text-xs text-on-surface-variant mt-0.5">Gestión oficial de mapas curriculares y moderación de gobernanza estudiantil</p>
                     </div>
-                    <button 
-                        onClick={() => navigate('/')}
-                        className="px-4 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                    >
-                        Salir del Admin
-                    </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <button 
+                            onClick={() => navigate('/visualizador')}
+                            className="px-3.5 py-2 text-xs font-semibold text-on-surface bg-surface-container hover:bg-surface-container-high rounded-xl border border-outline-variant/30 transition-colors flex items-center gap-1.5"
+                        >
+                            <span className="material-symbols-outlined text-base text-primary">account_tree</span>
+                            Visualizador
+                        </button>
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="px-3.5 py-2 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 rounded-xl transition-colors"
+                        >
+                            Salir al Portal
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -199,7 +217,11 @@ function AdminDashboard() {
                     <PlanEditorPanel
                         password={password}
                         availablePlans={availablePlans}
-                        onPlanSaved={() => loadAdminData()}
+                        initialCareer={initialCareer}
+                        onPlanSaved={(savedCareer) => {
+                            loadAdminData();
+                            if (onPlanSaved) onPlanSaved(savedCareer);
+                        }}
                     />
                 )}
 
