@@ -83,10 +83,6 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 w-full">
                     {/* Hero Content */}
                     <div className="text-center mb-12 sm:mb-16 space-y-6">
-                        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-surface-container-high border border-outline-variant/50 text-xs font-label-md shadow-sm">
-                            <span className="material-symbols-outlined text-primary text-[16px]">school</span>
-                            <span className="text-on-surface-variant uppercase tracking-[0.2em] font-semibold">Recursos para la excelencia académica</span>
-                        </div>
                         <h1 className="font-headline-lg text-3xl sm:text-5xl md:text-6xl max-w-4xl mx-auto leading-[1.15] serif-title text-on-surface font-bold">
                             Infraestructura Digital para la <span className="text-primary italic font-medium">Comunidad BUAP</span>
                         </h1>
@@ -205,37 +201,6 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                                 <span className="material-symbols-outlined text-base text-amber-500">how_to_vote</span>
                                 <span>Votar Propuestas</span>
                             </Link>
-                        </div>
-                    </div>
-
-                    {/* Quick Features */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="academic-card p-6 rounded-2xl flex items-center gap-5 shadow-sm">
-                            <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-primary text-xl">speed</span>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-on-surface text-base serif-title">Alto Rendimiento</h4>
-                                <p className="text-xs text-on-surface-variant mt-0.5">Arquitectura ligera y eficiente</p>
-                            </div>
-                        </div>
-                        <div className="academic-card p-6 rounded-2xl flex items-center gap-5 shadow-sm">
-                            <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-primary text-xl">encrypted</span>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-on-surface text-base serif-title">Soberanía de Datos</h4>
-                                <p className="text-xs text-on-surface-variant mt-0.5">Privacidad por diseño técnico</p>
-                            </div>
-                        </div>
-                        <div className="academic-card p-6 rounded-2xl flex items-center gap-5 shadow-sm">
-                            <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-primary text-xl">diversity_2</span>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-on-surface text-base serif-title">Iniciativa Estudiantil</h4>
-                                <p className="text-xs text-on-surface-variant mt-0.5">Desarrollado para la comunidad</p>
-                            </div>
                         </div>
                     </div>
                 </div>
