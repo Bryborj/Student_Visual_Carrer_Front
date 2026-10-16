@@ -1,7 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { navigate } from '../hooks/useRouter';
+import { generateSubjectId } from '../utils/academicLogic';
 
-export default function PlanEditorPanel({ password, availablePlans = [], onPlanSaved, initialCareer = '' }) {
+/**
+ * @param {{
+ *   mode?: 'admin' | 'proposal',
+ *   password?: string,
+ *   availablePlans?: any[],
+ *   onPlanSaved?: ((career: string | null) => void) | undefined,
+ *   initialCareer?: string,
+ *   user?: { username: string, emailHash: string } | null,
+ *   onRequireLogin?: () => void,
+ *   onProposalSubmitted?: (data: any) => void,
+ *   onOpenPreview?: (data: any) => void
+ * }} props
+ */
+export default function PlanEditorPanel({
+    mode = 'admin',
+    password = '',
+    availablePlans = [],
+    onPlanSaved,
+    initialCareer = '',
+    user = null,
+    onRequireLogin,
+    onProposalSubmitted,
+    onOpenPreview
+}) {
+    const isProposalMode = mode === 'proposal';
+
     // Modo: 'modify' (modificar existente) o 'create' (crear nuevo)
     const [editorMode, setEditorMode] = useState('modify');
     const [selectedCareerToLoad, setSelectedCareerToLoad] = useState('');
@@ -16,9 +42,10 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
     const [maxCredits, setMaxCredits] = useState(350);
     const [courses, setCourses] = useState([]); // Array de clusters: [{ cluster: 1, content: [...] }]
     const [electives, setElectives] = useState([]);
+    const [reason, setReason] = useState('');
 
     // Modal de edición/adición de materia
-    const [editingSubject, setEditingSubject] = useState(null); // { subject: {...}, clusterIndex: number, isNew: boolean }
+    const [editingSubject, setEditingSubject] = useState(null); // { subject: {...}, clusterIndex: number, isNew: boolean, originalId?: string, manualId?: boolean }
     const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
 
     // Modal de importación/exportación JSON
@@ -143,6 +170,22 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
         return list;
     }, [courses]);
 
+    const existingIds = useMemo(() => allSubjects.map(s => s.id), [allSubjects]);
+
+    // Detectar si el ID actual en el modal colisiona con otra materia
+    const duplicateSubjectConflict = useMemo(() => {
+        if (!editingSubject?.subject?.id) return null;
+        const candidate = editingSubject.subject.id.trim().toUpperCase();
+        if (!candidate) return null;
+        return allSubjects.find(s => {
+            if (s.id.toUpperCase() !== candidate) return false;
+            if (!editingSubject.isNew && s.id.toUpperCase() === (editingSubject.originalId || '').toUpperCase()) {
+                return false;
+            }
+            return true;
+        }) || null;
+    }, [editingSubject, allSubjects]);
+
     // Cálculos estadísticos
     const totalSubjectsCount = allSubjects.length;
     const calculatedCredits = allSubjects.reduce((acc, s) => acc + (Number(s.credits) || 0), 0);
@@ -154,6 +197,8 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
         setEditingSubject({
             clusterIndex,
             isNew: true,
+            originalId: '',
+            manualId: false,
             subject: {
                 id: '',
                 subject: '',
@@ -174,6 +219,8 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
             clusterIndex,
             subjectIndex,
             isNew: false,
+            originalId: target.id || '',
+            manualId: false,
             subject: { ...target }
         });
         setIsSubjectModalOpen(true);
@@ -183,19 +230,29 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
         e.preventDefault();
         if (!editingSubject) return;
 
-        const { clusterIndex, isNew, subjectIndex, subject } = editingSubject;
-        if (!subject.subject.trim() || !subject.id.trim()) {
-            alert('El nombre de la materia y la clave/ID son obligatorios.');
+        const { clusterIndex, isNew, subjectIndex, subject, originalId } = editingSubject;
+        const trimmedName = (subject.subject || '').trim();
+        if (!trimmedName) {
+            alert('El nombre de la materia es obligatorio.');
             return;
         }
 
-        const updatedCourses = [...courses];
-        const clusterContent = [...(updatedCourses[clusterIndex].content || [])];
+        // Generar clave automáticamente si está vacía o si colisiona con otra materia
+        let finalId = (subject.id || '').trim().toUpperCase();
+        if (!finalId || duplicateSubjectConflict) {
+            finalId = generateSubjectId(trimmedName, existingIds, originalId);
+        }
+
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: [...(c.content || [])]
+        }));
+        const clusterContent = updatedCourses[clusterIndex].content;
 
         const cleanSubject = {
             ...subject,
-            id: subject.id.trim().toUpperCase(),
-            subject: subject.subject.trim(),
+            id: finalId,
+            subject: trimmedName,
             credits: Number(subject.credits) || 0,
             theory: Number(subject.theory) || 0,
             lab: Number(subject.lab) || 0,
@@ -208,6 +265,17 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
             clusterContent.push(cleanSubject);
         } else {
             clusterContent[subjectIndex] = cleanSubject;
+            // Si cambió la clave de una materia existente, actualizar referencias en prerrequisitos
+            if (originalId && originalId.toUpperCase() !== finalId) {
+                updatedCourses.forEach(c => {
+                    c.content = c.content.map(item => {
+                        if (item.required && String(item.required).toUpperCase() === originalId.toUpperCase()) {
+                            return { ...item, required: finalId };
+                        }
+                        return item;
+                    });
+                });
+            }
         }
 
         // Reordenar por position_Y
@@ -269,7 +337,7 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
         setCourses(updatedCourses);
     };
 
-    // Guardar Plan Oficial en Base de Datos
+    // Guardar Plan Oficial en Base de Datos (Modo Admin)
     const handleSavePlanToDb = async () => {
         if (!career.trim()) {
             setFeedback({ type: 'error', message: 'Ingresa el nombre de la carrera.' });
@@ -320,6 +388,87 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
         } finally {
             setLoading(false);
         }
+    };
+
+    // Publicar Propuesta Comunitaria (Modo Estudiante)
+    const handlePublishProposal = async () => {
+        if (!career.trim()) {
+            setFeedback({ type: 'error', message: 'Ingresa el nombre de la carrera o selecciona un plan existente.' });
+            return;
+        }
+        if (!reason.trim()) {
+            setFeedback({ type: 'error', message: 'Por favor escribe el motivo o justificación académica de tu propuesta.' });
+            return;
+        }
+        if (courses.length === 0 || totalSubjectsCount === 0) {
+            setFeedback({ type: 'error', message: 'El plan propuesto debe contener al menos un semestre con materias.' });
+            return;
+        }
+        if (!user) {
+            setFeedback({
+                type: 'error',
+                message: 'Inicia sesión con tu cuenta institucional (@buap.mx) para publicar tu propuesta. Tus cambios en el lienzo se conservarán.'
+            });
+            if (onRequireLogin) onRequireLogin();
+            return;
+        }
+
+        setLoading(true);
+        setFeedback({ type: '', message: '' });
+        const isNew = editorMode === 'create';
+
+        try {
+            const token = localStorage.getItem('forum_token');
+            const res = await fetch('/api/proposals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    career: career.trim(),
+                    username: user.username,
+                    emailHash: user.emailHash,
+                    reason: reason.trim(),
+                    courses,
+                    electives,
+                    min_credits: Number(minCredits) || calculatedCredits,
+                    max_credits: Number(maxCredits) || calculatedCredits + 50,
+                    is_new_plan: isNew
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setFeedback({
+                    type: 'success',
+                    message: isNew
+                        ? `🎉 ¡Propuesta de nuevo plan publicada! Al aprobarse, aparecerá acreditada gracias a @${user.username}.`
+                        : '🎉 ¡Propuesta publicada exitosamente! Tu voto inicial a favor fue registrado.'
+                });
+                setReason('');
+                if (onProposalSubmitted) {
+                    setTimeout(() => onProposalSubmitted(data), 900);
+                }
+            } else {
+                setFeedback({ type: 'error', message: data.detail || data.error || 'Error al publicar la propuesta.' });
+            }
+        } catch (err) {
+            setFeedback({ type: 'error', message: 'Error de red al publicar la propuesta.' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOpenVisualPreview = () => {
+        if (!onOpenPreview) return;
+        onOpenPreview({
+            career: career.trim() || 'Nueva Carrera Propuesta',
+            author: user?.username,
+            reason: reason.trim() || 'Vista previa en edición',
+            isNewPlan: editorMode === 'create',
+            courses
+        });
     };
 
     // Eliminar Plan de Base de Datos
@@ -411,7 +560,9 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                             onClick={() => {
                                 setEditorMode('modify');
                                 if (availablePlans.length > 0) {
-                                    handleLoadPlan(availablePlans[0].career);
+                                    const targetCareer = selectedCareerToLoad || availablePlans[0].career;
+                                    setSelectedCareerToLoad(targetCareer);
+                                    handleLoadPlan(targetCareer);
                                 }
                             }}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
@@ -420,7 +571,7 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                                     : 'text-on-surface-variant hover:text-on-surface'
                             }`}
                         >
-                            <span>✏️</span> Modificar Plan Existente
+                            <span>✏️</span> {isProposalMode ? 'Modificar Plan Existente' : 'Modificar Plan Existente'}
                         </button>
                         <button
                             type="button"
@@ -434,7 +585,7 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                                     : 'text-on-surface-variant hover:text-on-surface'
                             }`}
                         >
-                            <span>➕</span> Crear Nuevo Plan
+                            <span>➕</span> {isProposalMode ? 'Proponer Nuevo Plan' : 'Crear Nuevo Plan'}
                         </button>
                     </div>
 
@@ -467,27 +618,53 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                             <span>Descargar JSON</span>
                         </button>
 
-                        {editorMode === 'modify' && career && (
-                            <button
-                                type="button"
-                                onClick={() => setIsDeleteModalOpen(true)}
-                                className="px-3 py-2 rounded-xl bg-error/10 text-xs font-semibold text-error hover:bg-error/20 border border-error/30 flex items-center gap-1.5 transition-colors"
-                                title="Eliminar plan de la base de datos"
-                            >
-                                <span className="material-symbols-outlined text-sm">delete</span>
-                                <span>Eliminar Plan</span>
-                            </button>
-                        )}
+                        {isProposalMode ? (
+                            <>
+                                {onOpenPreview && (
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenVisualPreview}
+                                        className="px-4 py-2 rounded-xl bg-secondary/15 text-secondary text-xs font-bold hover:bg-secondary/25 border border-secondary/30 flex items-center gap-1.5 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">visibility</span>
+                                        <span>Vista Previa y Cambios</span>
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handlePublishProposal}
+                                    disabled={loading}
+                                    className="px-5 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <span className="material-symbols-outlined text-sm">how_to_vote</span>
+                                    <span>{loading ? 'Publicando...' : 'Publicar Propuesta a Votación'}</span>
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                {editorMode === 'modify' && career && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDeleteModalOpen(true)}
+                                        className="px-3 py-2 rounded-xl bg-error/10 text-xs font-semibold text-error hover:bg-error/20 border border-error/30 flex items-center gap-1.5 transition-colors"
+                                        title="Eliminar plan de la base de datos"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">delete</span>
+                                        <span>Eliminar Plan</span>
+                                    </button>
+                                )}
 
-                        <button
-                            type="button"
-                            onClick={handleSavePlanToDb}
-                            disabled={loading}
-                            className="px-5 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-sm">save</span>
-                            <span>{loading ? 'Guardando...' : 'Guardar Plan en BD'}</span>
-                        </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSavePlanToDb}
+                                    disabled={loading}
+                                    className="px-5 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <span className="material-symbols-outlined text-sm">save</span>
+                                    <span>{loading ? 'Guardando...' : 'Guardar Plan en BD'}</span>
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -504,7 +681,7 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                         >
                             {availablePlans.map((p) => (
                                 <option key={p.career} value={p.career}>
-                                    {p.career} — {p.faculty}
+                                    {p.career} {p.faculty ? `— ${p.faculty}` : ''}
                                 </option>
                             ))}
                         </select>
@@ -513,7 +690,7 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                             onClick={() => handleLoadPlan(selectedCareerToLoad)}
                             className="px-4 py-2 rounded-xl bg-secondary/15 text-secondary text-xs font-bold hover:bg-secondary/25 transition-colors"
                         >
-                            Recargar Datos
+                            Recargar Datos Oficiales
                         </button>
                     </div>
                 )}
@@ -535,9 +712,9 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
 
             {/* Formulario de Metadatos del Plan */}
             <div className="bg-surface p-5 rounded-2xl border border-outline-variant/30 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                <div className="flex flex-wrap items-center justify-between border-b border-outline-variant/20 pb-3 gap-2">
                     <h2 className="text-base font-bold text-on-surface flex items-center gap-2">
-                        <span>📋</span> Información General del Plan
+                        <span>📋</span> {isProposalMode ? 'Datos del Plan y Justificación de la Propuesta' : 'Información General del Plan'}
                     </h2>
                     {/* Resumen de estadísticas */}
                     <div className="flex items-center gap-4 text-xs">
@@ -553,6 +730,43 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                     </div>
                 </div>
 
+                {isProposalMode && (
+                    <div className="space-y-2 pb-2 border-b border-outline-variant/20">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-primary uppercase">
+                                Motivo o Justificación Académica de la Propuesta *
+                            </label>
+                            {user ? (
+                                <span className="text-[11px] text-amber-500 font-semibold flex items-center gap-1">
+                                    <span>🌟</span>
+                                    <span>Autor acreditado al aprobarse: <strong>@{user.username}</strong></span>
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={onRequireLogin}
+                                    className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1"
+                                >
+                                    <span className="material-symbols-outlined text-xs">login</span>
+                                    <span>Inicia sesión (@buap.mx) para acreditar tu usuario</span>
+                                </button>
+                            )}
+                        </div>
+                        <textarea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            rows={2}
+                            placeholder={
+                                editorMode === 'create'
+                                    ? 'Ej. Incorporación del mapa curricular oficial Minerva de la Licenciatura en Ciencia de Datos...'
+                                    : 'Ej. Se corrigen prerrequisitos del 5.º semestre y se agregan asignaturas optativas según plan vigente...'
+                            }
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:border-primary resize-y"
+                            required
+                        />
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
                         <label className="text-xs font-bold text-primary uppercase">Nombre de la Carrera / Licenciatura *</label>
@@ -560,8 +774,9 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                             type="text"
                             value={career}
                             onChange={(e) => setCareer(e.target.value)}
+                            disabled={isProposalMode && editorMode === 'modify'}
                             placeholder="Ej. Ingeniería en Ciencias de la Computación"
-                            className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:border-primary"
+                            className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:border-primary disabled:opacity-70"
                             required
                         />
                     </div>
@@ -853,17 +1068,13 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                                     value={editingSubject.subject.subject}
                                     onChange={(e) => {
                                         const name = e.target.value;
-                                        // Auto sugerir código si es nueva y está vacío
-                                        let suggestedId = editingSubject.subject.id;
-                                        if (editingSubject.isNew && (!suggestedId || suggestedId.length <= 4)) {
-                                            const words = name.trim().split(/\s+/).filter(w => w.length > 2);
-                                            if (words.length > 0) {
-                                                suggestedId = words.map(w => w[0].toUpperCase()).join('').slice(0, 5);
-                                            }
+                                        let nextId = editingSubject.subject.id;
+                                        if (editingSubject.isNew && !editingSubject.manualId) {
+                                            nextId = generateSubjectId(name, existingIds, editingSubject.originalId);
                                         }
                                         setEditingSubject({
                                             ...editingSubject,
-                                            subject: { ...editingSubject.subject, subject: name, id: suggestedId }
+                                            subject: { ...editingSubject.subject, subject: name, id: nextId }
                                         });
                                     }}
                                     placeholder="Ej. Programación Avanzada"
@@ -872,20 +1083,65 @@ export default function PlanEditorPanel({ password, availablePlans = [], onPlanS
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-primary uppercase mb-1">Clave / ID Único *</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-xs font-bold text-primary uppercase">
+                                            Clave / ID (Automático)
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const autoId = generateSubjectId(
+                                                    editingSubject.subject.subject,
+                                                    existingIds,
+                                                    editingSubject.originalId
+                                                );
+                                                setEditingSubject({
+                                                    ...editingSubject,
+                                                    manualId: false,
+                                                    subject: { ...editingSubject.subject, id: autoId }
+                                                });
+                                            }}
+                                            className="text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                                            title="Regenerar clave única automáticamente a partir del nombre"
+                                        >
+                                            <span className="material-symbols-outlined text-xs">autorenew</span>
+                                            <span>Auto-generar</span>
+                                        </button>
+                                    </div>
                                     <input
                                         type="text"
                                         value={editingSubject.subject.id}
                                         onChange={(e) => setEditingSubject({
                                             ...editingSubject,
+                                            manualId: true,
                                             subject: { ...editingSubject.subject, id: e.target.value.toUpperCase() }
                                         })}
-                                        placeholder="Ej. PA, CDA, ARQ101"
-                                        className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/50 text-on-surface text-sm font-mono focus:outline-none focus:border-primary"
-                                        required
+                                        placeholder="Se genera automáticamente..."
+                                        className={`w-full px-3.5 py-2 rounded-xl bg-background border text-on-surface text-sm font-mono focus:outline-none ${
+                                            duplicateSubjectConflict
+                                                ? 'border-error focus:border-error'
+                                                : 'border-outline-variant/50 focus:border-primary'
+                                        }`}
                                     />
+                                    {duplicateSubjectConflict ? (
+                                        <p className="text-[10px] text-error mt-1 flex items-center gap-1">
+                                            <span>⚠️</span>
+                                            <span>
+                                                Clave en uso por "{duplicateSubjectConflict.subject}" (Sem. {duplicateSubjectConflict.cluster}). Se ajustará automáticamente al guardar.
+                                            </span>
+                                        </p>
+                                    ) : editingSubject.subject.id ? (
+                                        <p className="text-[10px] text-emerald-500 mt-1 flex items-center gap-1">
+                                            <span>✨</span>
+                                            <span>Clave única lista: <strong>{editingSubject.subject.id}</strong></span>
+                                        </p>
+                                    ) : (
+                                        <p className="text-[10px] text-on-surface-variant mt-1">
+                                            Se asignará automáticamente al escribir el nombre.
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-primary uppercase mb-1">Créditos *</label>

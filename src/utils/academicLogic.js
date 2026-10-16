@@ -108,3 +108,93 @@ export const isSubjectAvailable = (subject, passedSubjectNames, subjectsByName, 
     // Single requirement
     return checkCode(requiredCodes);
 };
+
+/**
+ * Generates a clean, unique, standardized subject ID/code from its name
+ * following BUAP curriculum conventions (e.g., "Programación Básica" -> "PB",
+ * "Inglés I" -> "ING1", "Cálculo Diferencial con Aplicaciones" -> "CDA",
+ * "Física" -> "FIS"), with automatic collision avoidance against existing IDs.
+ *
+ * @param {string} subjectName - The display name of the subject.
+ * @param {Array<string>} existingIds - Existing subject IDs in the plan.
+ * @param {string} [currentId=''] - Current subject's own ID (excluded when editing).
+ * @returns {string} Unique uppercase subject ID.
+ */
+export const generateSubjectId = (subjectName, existingIds = [], currentId = '') => {
+    if (!subjectName || !subjectName.trim()) return '';
+
+    const romanMap = {
+        I: '1', II: '2', III: '3', IV: '4', V: '5',
+        VI: '6', VII: '7', VIII: '8', IX: '9', X: '10'
+    };
+
+    const stopWords = new Set([
+        'DE', 'DEL', 'LA', 'EL', 'LOS', 'LAS', 'EN', 'Y', 'E', 'O', 'U',
+        'PARA', 'POR', 'CON', 'A', 'AL', 'UN', 'UNA', 'UNOS', 'UNAS', 'SOBRE', 'SIN'
+    ]);
+
+    const clean = subjectName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+        .trim();
+
+    const tokens = clean.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return '';
+
+    const meaningful = tokens.filter(t => !stopWords.has(t.toUpperCase()));
+    const words = meaningful.length > 0 ? meaningful : tokens;
+
+    const isNumeral = (w) => {
+        const up = w.toUpperCase();
+        return Boolean(romanMap[up]) || /^\d+$/.test(up);
+    };
+
+    const toNumeral = (w) => {
+        const up = w.toUpperCase();
+        return romanMap[up] || up;
+    };
+
+    let baseId = '';
+
+    if (words.length === 1) {
+        const w = words[0].toUpperCase();
+        baseId = w.slice(0, 3);
+    } else if (words.length === 2 && isNumeral(words[1])) {
+        // Ej: "Inglés I" -> "ING1", "Física II" -> "FIS2"
+        baseId = `${words[0].toUpperCase().slice(0, 3)}${toNumeral(words[1])}`;
+    } else {
+        baseId = words
+            .map((w) => {
+                if (isNumeral(w)) return toNumeral(w);
+                return w[0].toUpperCase();
+            })
+            .join('')
+            .slice(0, 6);
+    }
+
+    baseId = baseId.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!baseId) baseId = 'MAT';
+
+    const usedIds = new Set(
+        (existingIds || [])
+            .filter(id => id && String(id).trim().toUpperCase() !== String(currentId || '').trim().toUpperCase())
+            .map(id => String(id).trim().toUpperCase())
+    );
+
+    if (!usedIds.has(baseId)) {
+        return baseId;
+    }
+
+    // Resolver colisión automáticamente
+    let counter = 2;
+    const endsWithDigit = /\d$/.test(baseId);
+    while (true) {
+        const candidate = endsWithDigit ? `${baseId}_${counter}` : `${baseId}${counter}`;
+        if (!usedIds.has(candidate)) {
+            return candidate;
+        }
+        counter++;
+    }
+};
+
