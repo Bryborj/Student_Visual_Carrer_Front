@@ -170,6 +170,44 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                         </div>
                     </div>
 
+                    {/* Student Visual Plan Editor Banner */}
+                    <div className="academic-card rounded-2xl p-6 sm:p-8 mb-12 border border-primary/25 shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/30">
+                                <span className="material-symbols-outlined text-primary text-3xl">edit_calendar</span>
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30">
+                                        Participación Estudiantil
+                                    </span>
+                                </div>
+                                <h3 className="font-headline-md text-xl sm:text-2xl text-on-surface serif-title font-bold">
+                                    Editor Visual de Planes y Propuestas Estudiantiles
+                                </h3>
+                                <p className="text-on-surface-variant text-sm mt-1 max-w-2xl leading-relaxed">
+                                    ¿Tu carrera necesita actualizar materias o aún no está en la plataforma? Usa el mismo panel gráfico interactivo para arrastrar materias, organizar la grilla con espacios en blanco y proponer nuevos planes con generación automática de claves.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
+                            <Link
+                                to="/propuestas?tab=editor"
+                                className="px-5 py-3.5 rounded-xl bg-primary text-on-primary font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] shadow-md"
+                            >
+                                <span className="material-symbols-outlined text-base">add_box</span>
+                                <span>Abrir Editor Visual</span>
+                            </Link>
+                            <Link
+                                to="/propuestas"
+                                className="px-4 py-3.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/40 font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+                            >
+                                <span className="material-symbols-outlined text-base text-amber-500">how_to_vote</span>
+                                <span>Votar Propuestas</span>
+                            </Link>
+                        </div>
+                    </div>
+
                     {/* Quick Features */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="academic-card p-6 rounded-2xl flex items-center gap-5 shadow-sm">

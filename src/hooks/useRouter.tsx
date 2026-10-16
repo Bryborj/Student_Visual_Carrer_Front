@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 export function navigate(to: string) {
-    const current = window.location.pathname + window.location.hash;
-    if (current !== to && window.location.pathname !== to) {
+    const current = window.location.pathname + window.location.search + window.location.hash;
+    if (current !== to) {
         window.history.pushState({}, '', to);
         window.dispatchEvent(new PopStateEvent('popstate'));
         window.scrollTo(0, 0);
@@ -11,11 +11,13 @@ export function navigate(to: string) {
 
 export function useRouter() {
     const [pathname, setPathname] = useState<string>(() => window.location.pathname);
+    const [search, setSearch] = useState<string>(() => window.location.search);
     const [hash, setHash] = useState<string>(() => window.location.hash);
 
     useEffect(() => {
         const handleLocationChange = () => {
             setPathname(window.location.pathname);
+            setSearch(window.location.search);
             setHash(window.location.hash);
         };
 
@@ -28,7 +30,7 @@ export function useRouter() {
         };
     }, []);
 
-    return { pathname, hash, navigate };
+    return { pathname, search, hash, navigate };
 }
 
 interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {

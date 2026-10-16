@@ -49,6 +49,9 @@ const normalizeReq = (r: Subject['required']) =>
 const describeDiff = (before: Subject & { cluster: any }, after: Subject & { cluster: any }) => {
     const diffs: string[] = [];
     if (String(before.cluster) !== String(after.cluster)) diffs.push(`Semestre ${before.cluster} → ${after.cluster}`);
+    const rowBefore = Number(before.position_Y ?? before.Position ?? 0);
+    const rowAfter = Number(after.position_Y ?? after.Position ?? 0);
+    if (rowBefore && rowAfter && rowBefore !== rowAfter) diffs.push(`Fila ${rowBefore} → ${rowAfter}`);
     if (subjectCredits(before) !== subjectCredits(after)) diffs.push(`Créditos ${subjectCredits(before)} → ${subjectCredits(after)}`);
     if (subjectName(before) !== subjectName(after)) diffs.push(`Nombre "${subjectName(before)}" → "${subjectName(after)}"`);
     if (normalizeReq(before.required) !== normalizeReq(after.required)) {
@@ -237,19 +240,36 @@ export default function ProposalPreviewModal({
                                         const subjects = (c.content || []).slice().sort(
                                             (a, b) => (a.position_Y || a.Position || 0) - (b.position_Y || b.Position || 0)
                                         );
+                                        const maxRow = subjects.length > 0
+                                            ? Math.max(...subjects.map((s, idx) => Number(s.position_Y ?? s.Position) || (idx + 1)))
+                                            : 0;
                                         return (
-                                            <div key={String(c.cluster)} className="min-w-[170px] w-[170px] shrink-0">
+                                            <div key={String(c.cluster)} className="min-w-[175px] w-[175px] shrink-0">
                                                 <h3 className="text-xs font-bold text-center text-on-surface-variant uppercase mb-2 py-1.5 rounded-lg bg-surface-container-high">
                                                     Semestre {c.cluster}
                                                 </h3>
                                                 <div className="space-y-2">
-                                                    {subjects.map(s => {
+                                                    {Array.from({ length: maxRow }, (_, rIdx) => {
+                                                        const rowIndex = rIdx + 1;
+                                                        const s = subjects.find(
+                                                            (sub, idx) => (Number(sub.position_Y ?? sub.Position) || (idx + 1)) === rowIndex
+                                                        );
+                                                        if (!s) {
+                                                            return (
+                                                                <div
+                                                                    key={`empty-${c.cluster}-${rowIndex}`}
+                                                                    className="min-h-[76px] rounded-lg border border-dashed border-outline-variant/25 bg-surface/20 flex items-center justify-center text-[10px] font-mono text-on-surface-variant/40"
+                                                                >
+                                                                    Fila {rowIndex} • Vacío
+                                                                </div>
+                                                            );
+                                                        }
                                                         const change = hasOriginal ? (analysis.status.get(subjectKey(s)) || 'unchanged') : 'unchanged';
                                                         const req = normalizeReq(s.required);
                                                         return (
                                                             <div
-                                                                key={subjectKey(s)}
-                                                                className={`border-l-4 rounded-lg border border-outline-variant/30 p-2.5 ${CHANGE_STYLES[change]}`}
+                                                                key={`${subjectKey(s)}-${rowIndex}`}
+                                                                className={`min-h-[76px] border-l-4 rounded-lg border border-outline-variant/30 p-2.5 flex flex-col justify-between ${CHANGE_STYLES[change]}`}
                                                                 title={req ? `Prerrequisitos: ${req}` : 'Sin prerrequisitos'}
                                                             >
                                                                 <div className="flex justify-between text-[10px] text-on-surface-variant mb-1">

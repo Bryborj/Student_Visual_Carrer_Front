@@ -11,7 +11,7 @@ import { useStudyPlan } from './hooks/useStudyPlan';
 import { useRouter, navigate } from './hooks/useRouter';
 
 function App() {
-    const { pathname, hash } = useRouter();
+    const { pathname, search, hash } = useRouter();
     
     const [availablePlans, setAvailablePlans] = useState([]);
     const [selectedPlanConfig, setSelectedPlanConfigState] = useState(null);
@@ -132,9 +132,13 @@ function App() {
     }
 
     if (isProposalsRoute) {
+        const params = new URLSearchParams(search || '');
+        const initialTab = params.get('tab') === 'editor' ? 'new_proposal' : 'proposals';
         return (
             <StudentPlanEditor
                 availablePlans={availablePlans}
+                initialCareer={selectedPlanConfig?.career || ''}
+                initialTab={initialTab}
                 onGoHome={() => navigate('/')}
             />
         );

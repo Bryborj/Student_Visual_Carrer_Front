@@ -55,6 +55,32 @@ export default function PlanEditorPanel({
     // Modal de confirmación para eliminar plan
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+    // Control de grilla (espacios en blanco position_Y) y Drag & Drop
+    const [extraGridRows, setExtraGridRows] = useState(0);
+    const [draggedItem, setDraggedItem] = useState(null); // { clusterIdx: number, rowIndex: number, subjectId: string }
+    const [dragOverSlot, setDragOverSlot] = useState(null); // { clusterIdx: number, rowIndex: number }
+
+    // Normaliza la grilla de cada semestre preservando huecos (position_Y) y evitando colisiones en la misma fila
+    const normalizeClustersGrid = (rawCourses) => {
+        if (!Array.isArray(rawCourses)) return [];
+        return rawCourses.map((clusterObj) => {
+            const content = Array.isArray(clusterObj.content) ? clusterObj.content : [];
+            const sorted = [...content].sort(
+                (a, b) => (Number(a.position_Y ?? a.Position) || 0) - (Number(b.position_Y ?? b.Position) || 0)
+            );
+            const usedRows = new Set();
+            const normalizedContent = sorted.map((s, idx) => {
+                let row = Math.max(1, Number(s.position_Y ?? s.Position) || (idx + 1));
+                while (usedRows.has(row)) {
+                    row += 1;
+                }
+                usedRows.add(row);
+                return { ...s, position_Y: row };
+            });
+            return { ...clusterObj, content: normalizedContent };
+        });
+    };
+
     // Inicializar nuevo plan con número de semestres por defecto (ej. 9 semestres)
     const initBlankPlan = (semestersCount = 9) => {
         const initialClusters = Array.from({ length: semestersCount }, (_, i) => ({
@@ -68,6 +94,7 @@ export default function PlanEditorPanel({
         setMaxCredits(350);
         setCourses(initialClusters);
         setElectives([]);
+        setExtraGridRows(0);
         setFeedback({ type: '', message: '' });
     };
 
@@ -98,8 +125,9 @@ export default function PlanEditorPanel({
                 setLogoUrl(data.logo_url || '');
                 setMinCredits(data.min_credits || 250);
                 setMaxCredits(data.max_credits || 350);
-                setCourses(Array.isArray(data.courses) ? data.courses : []);
+                setCourses(normalizeClustersGrid(Array.isArray(data.courses) ? data.courses : []));
                 setElectives(Array.isArray(data.electives) ? data.electives : []);
+                setExtraGridRows(0);
                 setFeedback({ type: 'success', message: `Plan "${data.career}" cargado correctamente.` });
             } else {
                 setFeedback({ type: 'error', message: 'No se pudo cargar el plan de la base de datos.' });
@@ -186,14 +214,33 @@ export default function PlanEditorPanel({
         }) || null;
     }, [editingSubject, allSubjects]);
 
-    // Cálculos estadísticos
+    // Cálculos estadísticos y de filas de la grilla (position_Y)
     const totalSubjectsCount = allSubjects.length;
     const calculatedCredits = allSubjects.reduce((acc, s) => acc + (Number(s.credits) || 0), 0);
 
-    // Acciones sobre materias
-    const handleOpenAddSubject = (clusterIndex) => {
+    const maxUsedRow = useMemo(() => {
+        let max = 6;
+        courses.forEach(c => {
+            (c.content || []).forEach(s => {
+                const row = Number(s.position_Y ?? s.Position) || 1;
+                if (row > max) max = row;
+            });
+        });
+        return max;
+    }, [courses]);
+
+    const totalGridRows = Math.max(1, maxUsedRow + extraGridRows);
+
+    // Acciones sobre materias (soportando slots específicos de la grilla position_Y)
+    const handleOpenAddSubject = (clusterIndex, targetRow = null) => {
         const cluster = courses[clusterIndex];
-        const nextPositionY = (cluster.content || []).length + 1;
+        const usedRows = new Set((cluster?.content || []).map(s => Number(s.position_Y) || 1));
+        let firstFreeRow = 1;
+        while (usedRows.has(firstFreeRow)) {
+            firstFreeRow += 1;
+        }
+        const nextPositionY = targetRow ? Number(targetRow) : firstFreeRow;
+
         setEditingSubject({
             clusterIndex,
             isNew: true,
@@ -245,9 +292,23 @@ export default function PlanEditorPanel({
 
         const updatedCourses = courses.map(c => ({
             ...c,
-            content: [...(c.content || [])]
+            content: (c.content || []).map(s => ({ ...s }))
         }));
         const clusterContent = updatedCourses[clusterIndex].content;
+        const desiredRow = Math.max(1, Number(subject.position_Y) || 1);
+
+        // Si otra materia en el mismo semestre ya ocupa desiredRow, empujar hacia abajo en cascada
+        const otherItems = clusterContent
+            .filter((_, idx) => isNew || idx !== subjectIndex)
+            .sort((a, b) => (Number(a.position_Y) || 1) - (Number(b.position_Y) || 1));
+
+        let rowToShift = desiredRow;
+        otherItems.forEach(item => {
+            if (Number(item.position_Y) === rowToShift) {
+                item.position_Y = rowToShift + 1;
+                rowToShift += 1;
+            }
+        });
 
         const cleanSubject = {
             ...subject,
@@ -257,8 +318,8 @@ export default function PlanEditorPanel({
             theory: Number(subject.theory) || 0,
             lab: Number(subject.lab) || 0,
             autonomous: Number(subject.autonomous) || 0,
-            position_Y: Number(subject.position_Y) || 1,
-            required: subject.required ? subject.required.trim() : null
+            position_Y: desiredRow,
+            required: subject.required ? String(subject.required).trim() : null
         };
 
         if (isNew) {
@@ -278,8 +339,8 @@ export default function PlanEditorPanel({
             }
         }
 
-        // Reordenar por position_Y
-        clusterContent.sort((a, b) => (a.position_Y || 0) - (b.position_Y || 0));
+        // Reordenar por position_Y conservando espacios en blanco
+        clusterContent.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
         updatedCourses[clusterIndex].content = clusterContent;
 
         setCourses(updatedCourses);
@@ -291,49 +352,185 @@ export default function PlanEditorPanel({
         const sub = courses[clusterIndex].content[subjectIndex];
         if (!confirm(`¿Eliminar la materia "${sub.subject}"?`)) return;
 
-        const updatedCourses = [...courses];
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: [...(c.content || [])]
+        }));
+        // Eliminar sin compactar position_Y para respetar la grilla (deja su celda en blanco)
         updatedCourses[clusterIndex].content = updatedCourses[clusterIndex].content.filter((_, idx) => idx !== subjectIndex);
         setCourses(updatedCourses);
     };
 
+    // Mover materia 1 fila arriba/abajo (soporta espacios en blanco o intercambio si está ocupada)
     const handleMoveSubjectVertical = (clusterIndex, subjectIndex, direction) => {
-        const cluster = courses[clusterIndex];
-        const content = [...cluster.content];
-        const targetIndex = subjectIndex + direction;
-        if (targetIndex < 0 || targetIndex >= content.length) return;
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: (c.content || []).map(s => ({ ...s }))
+        }));
+        const content = updatedCourses[clusterIndex].content;
+        const currentSub = content[subjectIndex];
+        if (!currentSub) return;
 
-        // Intercambiar
-        const temp = content[subjectIndex];
-        content[subjectIndex] = content[targetIndex];
-        content[targetIndex] = temp;
+        const currentRow = Number(currentSub.position_Y) || (subjectIndex + 1);
+        const targetRow = currentRow + direction;
+        if (targetRow < 1) return;
 
-        // Reasignar position_Y
-        content.forEach((s, idx) => {
-            s.position_Y = idx + 1;
-        });
+        const occupant = content.find((s, idx) => idx !== subjectIndex && Number(s.position_Y) === targetRow);
+        if (occupant) {
+            occupant.position_Y = currentRow;
+            currentSub.position_Y = targetRow;
+        } else {
+            currentSub.position_Y = targetRow;
+        }
 
-        const updatedCourses = [...courses];
-        updatedCourses[clusterIndex].content = content;
+        content.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
         setCourses(updatedCourses);
     };
 
+    // Mover materia al semestre contiguo conservando su fila si está libre
     const handleMoveSubjectHorizontal = (clusterIndex, subjectIndex, direction) => {
         const targetClusterIndex = clusterIndex + direction;
         if (targetClusterIndex < 0 || targetClusterIndex >= courses.length) return;
 
-        const updatedCourses = [...courses];
-        const sourceContent = [...updatedCourses[clusterIndex].content];
-        const targetContent = [...(updatedCourses[targetClusterIndex].content || [])];
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: (c.content || []).map(s => ({ ...s }))
+        }));
+        const sourceContent = updatedCourses[clusterIndex].content;
+        const targetContent = updatedCourses[targetClusterIndex].content;
 
         const [movedSubject] = sourceContent.splice(subjectIndex, 1);
-        movedSubject.position_Y = targetContent.length + 1;
+        if (!movedSubject) return;
+
+        const preferredRow = Number(movedSubject.position_Y) || 1;
+        const usedTargetRows = new Set(targetContent.map(s => Number(s.position_Y) || 1));
+        let finalRow = preferredRow;
+        while (usedTargetRows.has(finalRow)) {
+            finalRow += 1;
+        }
+        movedSubject.position_Y = finalRow;
         targetContent.push(movedSubject);
+        targetContent.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
 
-        // Reindexar fuentes
-        sourceContent.forEach((s, idx) => { s.position_Y = idx + 1; });
+        setCourses(updatedCourses);
+    };
 
-        updatedCourses[clusterIndex].content = sourceContent;
-        updatedCourses[targetClusterIndex].content = targetContent;
+    // Insertar un espacio en blanco en rowIndex empujando las materias desde rowIndex hacia abajo
+    const handleInsertBlankAbove = (clusterIndex, rowIndex) => {
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: (c.content || []).map(s => ({ ...s }))
+        }));
+        updatedCourses[clusterIndex].content.forEach(s => {
+            const r = Number(s.position_Y) || 1;
+            if (r >= rowIndex) {
+                s.position_Y = r + 1;
+            }
+        });
+        updatedCourses[clusterIndex].content.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
+        setCourses(updatedCourses);
+    };
+
+    // Cerrar un espacio en blanco subiendo 1 fila las materias que están debajo en ese semestre
+    const handleRemoveBlankSlot = (clusterIndex, rowIndex) => {
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: (c.content || []).map(s => ({ ...s }))
+        }));
+        updatedCourses[clusterIndex].content.forEach(s => {
+            const r = Number(s.position_Y) || 1;
+            if (r > rowIndex) {
+                s.position_Y = r - 1;
+            }
+        });
+        updatedCourses[clusterIndex].content.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
+        setCourses(updatedCourses);
+    };
+
+    // Handlers de Drag & Drop (Arrastrar y Soltar materias en cualquier celda de la grilla)
+    const handleDragStart = (e, clusterIdx, rowIndex, subjectId) => {
+        setDraggedItem({ clusterIdx, rowIndex, subjectId });
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            try {
+                e.dataTransfer.setData('text/plain', `${clusterIdx}:${rowIndex}:${subjectId}`);
+            } catch (_) {}
+        }
+    };
+
+    const handleDragOver = (e, clusterIdx, rowIndex) => {
+        e.preventDefault();
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'move';
+        }
+        if (!dragOverSlot || dragOverSlot.clusterIdx !== clusterIdx || dragOverSlot.rowIndex !== rowIndex) {
+            setDragOverSlot({ clusterIdx, rowIndex });
+        }
+    };
+
+    const handleDragLeave = (clusterIdx, rowIndex) => {
+        if (dragOverSlot && dragOverSlot.clusterIdx === clusterIdx && dragOverSlot.rowIndex === rowIndex) {
+            setDragOverSlot(null);
+        }
+    };
+
+    const handleDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverSlot(null);
+    };
+
+    const handleDrop = (e, targetClusterIdx, targetRowIndex) => {
+        e.preventDefault();
+        if (!draggedItem) return;
+
+        const { clusterIdx: sourceClusterIdx, rowIndex: sourceRowIndex } = draggedItem;
+        setDraggedItem(null);
+        setDragOverSlot(null);
+
+        if (sourceClusterIdx === targetClusterIdx && sourceRowIndex === targetRowIndex) {
+            return;
+        }
+
+        const updatedCourses = courses.map(c => ({
+            ...c,
+            content: (c.content || []).map(s => ({ ...s }))
+        }));
+
+        const sourceContent = updatedCourses[sourceClusterIdx]?.content;
+        const targetContent = updatedCourses[targetClusterIdx]?.content;
+        if (!sourceContent || !targetContent) return;
+
+        const sourceSubIdx = sourceContent.findIndex(s => Number(s.position_Y) === sourceRowIndex);
+        if (sourceSubIdx === -1) return;
+
+        const targetSubIdx = targetContent.findIndex(s => Number(s.position_Y) === targetRowIndex);
+
+        if (sourceClusterIdx === targetClusterIdx) {
+            // Mismo semestre: mover a espacio vacío o intercambiar con la materia destino
+            if (targetSubIdx === -1) {
+                sourceContent[sourceSubIdx].position_Y = targetRowIndex;
+            } else {
+                sourceContent[sourceSubIdx].position_Y = targetRowIndex;
+                sourceContent[targetSubIdx].position_Y = sourceRowIndex;
+            }
+            sourceContent.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
+        } else {
+            // Diferente semestre: mover a espacio vacío o intercambiar entre ambos semestres
+            const [movedSub] = sourceContent.splice(sourceSubIdx, 1);
+            if (targetSubIdx === -1) {
+                movedSub.position_Y = targetRowIndex;
+                targetContent.push(movedSub);
+            } else {
+                const [swappedSub] = targetContent.splice(targetSubIdx, 1);
+                movedSub.position_Y = targetRowIndex;
+                swappedSub.position_Y = sourceRowIndex;
+                targetContent.push(movedSub);
+                sourceContent.push(swappedSub);
+                sourceContent.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
+            }
+            targetContent.sort((a, b) => (Number(a.position_Y) || 0) - (Number(b.position_Y) || 0));
+        }
+
         setCourses(updatedCourses);
     };
 
@@ -538,7 +735,8 @@ export default function PlanEditorPanel({
             if (parsed.logo_url) setLogoUrl(parsed.logo_url);
             if (parsed.min_credits) setMinCredits(parsed.min_credits);
             if (parsed.max_credits) setMaxCredits(parsed.max_credits);
-            setCourses(parsed.courses);
+            setCourses(normalizeClustersGrid(parsed.courses));
+            setExtraGridRows(0);
             if (Array.isArray(parsed.electives)) setElectives(parsed.electives);
 
             setIsJsonModalOpen(false);
@@ -836,65 +1034,112 @@ export default function PlanEditorPanel({
                 </div>
             </div>
 
-            {/* Barra de Configuración de Semestres (7 a +9 semestres) */}
-            <div className="bg-surface p-4 rounded-2xl border border-outline-variant/30 shadow-sm flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-primary text-base">view_column</span>
-                        Semestres del Plan:
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm border border-primary/20">
-                        {courses.length} Semestres
-                    </span>
-                    {/* Presets rápidos */}
-                    <div className="hidden sm:flex items-center gap-1.5 ml-2">
-                        {[7, 8, 9, 10].map(n => (
+            {/* Barra de Configuración de Semestres y Grilla (Filas y Espacios en Blanco) */}
+            <div className="bg-surface p-4 rounded-2xl border border-outline-variant/30 shadow-sm space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-primary text-base">view_column</span>
+                            Semestres:
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs border border-primary/20">
+                            {courses.length} Sem.
+                        </span>
+                        {/* Presets rápidos */}
+                        <div className="hidden sm:flex items-center gap-1.5">
+                            {[7, 8, 9, 10].map(n => (
+                                <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => handleSetSemestersCount(n)}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                                        courses.length === n
+                                            ? 'bg-secondary text-on-secondary'
+                                            : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
+                                    }`}
+                                >
+                                    {n} Sem.
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
                             <button
-                                key={n}
                                 type="button"
-                                onClick={() => handleSetSemestersCount(n)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
-                                    courses.length === n
-                                        ? 'bg-secondary text-on-secondary'
-                                        : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
-                                }`}
+                                onClick={handleRemoveSemester}
+                                disabled={courses.length <= 1}
+                                className="px-2.5 py-1 rounded-xl bg-surface-container text-xs font-bold text-on-surface hover:bg-error/10 hover:text-error border border-outline-variant/40 disabled:opacity-30 transition-colors flex items-center gap-1"
                             >
-                                {n} Sem.
+                                <span className="material-symbols-outlined text-xs">remove</span>
+                                <span>Semestre</span>
                             </button>
-                        ))}
+                            <button
+                                type="button"
+                                onClick={handleAddSemester}
+                                className="px-2.5 py-1 rounded-xl bg-primary/15 text-xs font-bold text-primary hover:bg-primary/25 border border-primary/30 transition-colors flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-xs">add</span>
+                                <span>Semestre</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Control de Filas de la Grilla (Espacios en Blanco) */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-secondary text-base">grid_on</span>
+                            Filas de Grilla:
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full bg-secondary/10 text-secondary font-bold text-xs border border-secondary/20">
+                            {totalGridRows} Filas
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setExtraGridRows(prev => Math.max(0, prev - 1))}
+                            disabled={extraGridRows <= 0}
+                            className="px-2.5 py-1 rounded-xl bg-surface-container text-xs font-bold text-on-surface hover:bg-surface-container-high border border-outline-variant/40 disabled:opacity-30 transition-colors flex items-center gap-1"
+                            title="Reducir filas vacías adicionales al final de la grilla"
+                        >
+                            <span className="material-symbols-outlined text-xs">remove</span>
+                            <span>Fila</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setExtraGridRows(prev => prev + 1)}
+                            className="px-2.5 py-1 rounded-xl bg-secondary/15 text-xs font-bold text-secondary hover:bg-secondary/25 border border-secondary/30 transition-colors flex items-center gap-1"
+                            title="Agregar una fila en blanco adicional a toda la grilla"
+                        >
+                            <span className="material-symbols-outlined text-xs">add</span>
+                            <span>Agregar Fila en Blanco</span>
+                        </button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={handleRemoveSemester}
-                        disabled={courses.length <= 1}
-                        className="px-3 py-1.5 rounded-xl bg-surface-container text-xs font-bold text-on-surface hover:bg-error/10 hover:text-error border border-outline-variant/40 disabled:opacity-30 transition-colors flex items-center gap-1"
-                    >
-                        <span className="material-symbols-outlined text-sm">remove</span>
-                        <span>Quitar Semestre</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleAddSemester}
-                        className="px-3 py-1.5 rounded-xl bg-primary/15 text-xs font-bold text-primary hover:bg-primary/25 border border-primary/30 transition-colors flex items-center gap-1"
-                    >
-                        <span className="material-symbols-outlined text-sm">add</span>
-                        <span>Agregar Semestre</span>
-                    </button>
+                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-outline-variant/20 text-[11px] text-on-surface-variant">
+                    <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-primary text-sm">drag_indicator</span>
+                        <strong>Arrastra y suelta (Drag & Drop)</strong> cualquier materia hacia otro semestre o hacia una celda vacía para organizar el mapa gráfico.
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-secondary text-sm">space_dashboard</span>
+                        <strong>Espacios en blanco:</strong> las celdas vacías se conservan en el visualizador para alinear cadenas de seriación.
+                    </span>
                 </div>
             </div>
 
-            {/* Tablero Visual de Semestres y Materias (Columnas) */}
+            {/* Tablero Visual de Semestres y Grilla de Materias (Columnas x Filas) */}
             <div className="overflow-x-auto pb-4">
                 <div
                     className="flex gap-4 min-w-max"
-                    style={{ minHeight: '480px' }}
+                    style={{ minHeight: '520px' }}
                 >
                     {courses.map((clusterObj, clusterIdx) => {
                         const subjectsInCluster = clusterObj.content || [];
                         const clusterCredits = subjectsInCluster.reduce((sum, s) => sum + (Number(s.credits) || 0), 0);
+                        const maxRowInThisCluster = subjectsInCluster.reduce(
+                            (m, s) => Math.max(m, Number(s.position_Y) || 1),
+                            0
+                        );
 
                         return (
                             <div
@@ -922,119 +1167,201 @@ export default function PlanEditorPanel({
                                     </button>
                                 </div>
 
-                                {/* Lista de Tarjetas de Asignaturas */}
-                                <div className="p-3 flex-1 flex flex-col gap-2.5 overflow-y-auto max-h-[600px]">
-                                    {subjectsInCluster.length === 0 ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-outline-variant/30 rounded-xl text-center text-on-surface-variant/60">
-                                            <span className="material-symbols-outlined text-2xl mb-1">playlist_add</span>
-                                            <span className="text-xs">Sin materias aún</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenAddSubject(clusterIdx)}
-                                                className="mt-2 text-[11px] text-primary hover:underline font-bold"
-                                            >
-                                                + Agregar primera materia
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        subjectsInCluster.map((sub, subIdx) => {
-                                            const subName = sub.subject || sub.name;
+                                {/* Grilla de Filas (1..totalGridRows) con soporte de Espacios en Blanco y Drag & Drop */}
+                                <div className="p-3 flex-1 flex flex-col gap-2.5">
+                                    {Array.from({ length: totalGridRows }, (_, rIdx) => {
+                                        const rowIndex = rIdx + 1;
+                                        const subIdx = subjectsInCluster.findIndex(
+                                            s => (Number(s.position_Y) || 1) === rowIndex
+                                        );
+                                        const sub = subIdx !== -1 ? subjectsInCluster[subIdx] : null;
+                                        const isDragOver =
+                                            dragOverSlot &&
+                                            dragOverSlot.clusterIdx === clusterIdx &&
+                                            dragOverSlot.rowIndex === rowIndex;
+                                        const isBeingDragged =
+                                            draggedItem &&
+                                            draggedItem.clusterIdx === clusterIdx &&
+                                            draggedItem.rowIndex === rowIndex;
+
+                                        if (!sub) {
+                                            const hasSubjectsBelow = maxRowInThisCluster > rowIndex;
                                             return (
                                                 <div
-                                                    key={sub.id || subIdx}
-                                                    className="bg-surface rounded-xl p-3 border border-outline-variant/40 shadow-sm hover:border-primary/50 transition-all group flex flex-col justify-between"
+                                                    key={`empty-${clusterObj.cluster}-${rowIndex}`}
+                                                    onDragOver={(e) => handleDragOver(e, clusterIdx, rowIndex)}
+                                                    onDragLeave={() => handleDragLeave(clusterIdx, rowIndex)}
+                                                    onDrop={(e) => handleDrop(e, clusterIdx, rowIndex)}
+                                                    className={`min-h-[126px] rounded-xl border-2 border-dashed p-3 flex flex-col items-center justify-center text-center transition-all group ${
+                                                        isDragOver
+                                                            ? 'border-primary bg-primary/15 scale-[1.02] shadow-md'
+                                                            : 'border-outline-variant/25 bg-surface/30 hover:border-primary/40 hover:bg-surface/60'
+                                                    }`}
                                                 >
-                                                    <div>
-                                                        <div className="flex items-center justify-between gap-1 mb-1.5">
+                                                    <span className="text-[10px] font-mono uppercase tracking-wider text-on-surface-variant/60 mb-1">
+                                                        Fila {rowIndex} • Espacio en blanco
+                                                    </span>
+                                                    {isDragOver ? (
+                                                        <span className="text-xs font-bold text-primary flex items-center gap-1">
+                                                            <span className="material-symbols-outlined text-sm">place_item</span>
+                                                            Soltar materia aquí
+                                                        </span>
+                                                    ) : (
+                                                        <div className="flex flex-wrap items-center justify-center gap-2 mt-1 opacity-75 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenAddSubject(clusterIdx, rowIndex)}
+                                                                className="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                                                title={`Agregar materia en Semestre ${clusterObj.cluster}, Fila ${rowIndex}`}
+                                                            >
+                                                                <span className="material-symbols-outlined text-xs">add</span>
+                                                                <span>Materia aquí</span>
+                                                            </button>
+                                                            {hasSubjectsBelow && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveBlankSlot(clusterIdx, rowIndex)}
+                                                                    className="px-2 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface text-[10px] font-semibold flex items-center gap-0.5 transition-colors"
+                                                                    title="Cerrar este espacio vacío subiendo 1 fila las materias inferiores"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-xs">vertical_align_top</span>
+                                                                    <span>Quitar espacio</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+
+                                        const subName = sub.subject || sub.name;
+                                        return (
+                                            <div
+                                                key={`${sub.id || subIdx}-row-${rowIndex}`}
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, clusterIdx, rowIndex, sub.id)}
+                                                onDragEnd={handleDragEnd}
+                                                onDragOver={(e) => handleDragOver(e, clusterIdx, rowIndex)}
+                                                onDragLeave={() => handleDragLeave(clusterIdx, rowIndex)}
+                                                onDrop={(e) => handleDrop(e, clusterIdx, rowIndex)}
+                                                className={`min-h-[126px] bg-surface rounded-xl p-3 border shadow-sm transition-all group flex flex-col justify-between cursor-grab active:cursor-grabbing ${
+                                                    isBeingDragged
+                                                        ? 'opacity-40 scale-95 border-primary ring-2 ring-primary/40'
+                                                        : isDragOver
+                                                        ? 'border-primary bg-primary/5 ring-2 ring-primary scale-[1.02]'
+                                                        : 'border-outline-variant/40 hover:border-primary/50'
+                                                }`}
+                                            >
+                                                <div>
+                                                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                                                        <div className="flex items-center gap-1">
+                                                            <span
+                                                                className="material-symbols-outlined text-sm text-on-surface-variant/60 group-hover:text-primary cursor-grab"
+                                                                title="Arrastra para mover a otra fila o semestre"
+                                                            >
+                                                                drag_indicator
+                                                            </span>
                                                             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20">
                                                                 {sub.id}
                                                             </span>
-                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-secondary/10 text-secondary">
-                                                                {sub.credits} CR
+                                                            <span className="text-[10px] font-mono text-on-surface-variant/70">
+                                                                F{rowIndex}
                                                             </span>
                                                         </div>
-                                                        <h4 className="text-xs font-bold text-on-surface leading-tight mb-2">
-                                                            {subName}
-                                                        </h4>
-                                                        <div className="flex items-center justify-between text-[10px] text-on-surface-variant mb-2">
-                                                            <span>T: {sub.theory}h • L: {sub.lab}h</span>
-                                                            {sub.required ? (
-                                                                <span className="bg-surface-container px-1.5 py-0.5 rounded text-amber-400 font-mono" title={`Prerrequisito: ${sub.required}`}>
-                                                                    Req: {sub.required}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-green-500">Sin Req</span>
-                                                            )}
-                                                        </div>
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-secondary/10 text-secondary">
+                                                            {sub.credits} CR
+                                                        </span>
                                                     </div>
-
-                                                    {/* Botonera de acciones de la materia */}
-                                                    <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-on-surface-variant">
-                                                        <div className="flex items-center gap-1">
-                                                            {/* Mover horizontal (entre semestres) */}
-                                                            <button
-                                                                type="button"
-                                                                disabled={clusterIdx === 0}
-                                                                onClick={() => handleMoveSubjectHorizontal(clusterIdx, subIdx, -1)}
-                                                                className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
-                                                                title="Mover al semestre anterior"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">arrow_back</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                disabled={clusterIdx === courses.length - 1}
-                                                                onClick={() => handleMoveSubjectHorizontal(clusterIdx, subIdx, 1)}
-                                                                className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
-                                                                title="Mover al siguiente semestre"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                                                            </button>
-
-                                                            {/* Mover vertical (dentro del semestre) */}
-                                                            <button
-                                                                type="button"
-                                                                disabled={subIdx === 0}
-                                                                onClick={() => handleMoveSubjectVertical(clusterIdx, subIdx, -1)}
-                                                                className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
-                                                                title="Subir posición"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">arrow_upward</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                disabled={subIdx === subjectsInCluster.length - 1}
-                                                                onClick={() => handleMoveSubjectVertical(clusterIdx, subIdx, 1)}
-                                                                className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
-                                                                title="Bajar posición"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">arrow_downward</span>
-                                                            </button>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleOpenEditSubject(clusterIdx, subIdx)}
-                                                                className="p-1 rounded hover:bg-primary/10 text-primary text-[10px]"
-                                                                title="Editar materia"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">edit</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleDeleteSubject(clusterIdx, subIdx)}
-                                                                className="p-1 rounded hover:bg-error/10 text-error text-[10px]"
-                                                                title="Eliminar materia"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">delete</span>
-                                                            </button>
-                                                        </div>
+                                                    <h4 className="text-xs font-bold text-on-surface leading-tight mb-2">
+                                                        {subName}
+                                                    </h4>
+                                                    <div className="flex items-center justify-between text-[10px] text-on-surface-variant mb-2">
+                                                        <span>T: {sub.theory}h • L: {sub.lab}h</span>
+                                                        {sub.required ? (
+                                                            <span className="bg-surface-container px-1.5 py-0.5 rounded text-amber-400 font-mono" title={`Prerrequisito: ${sub.required}`}>
+                                                                Req: {sub.required}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-green-500">Sin Req</span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            );
-                                        })
-                                    )}
+
+                                                {/* Botonera de acciones de la materia */}
+                                                <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-on-surface-variant">
+                                                    <div className="flex items-center gap-0.5">
+                                                        {/* Mover horizontal (entre semestres) */}
+                                                        <button
+                                                            type="button"
+                                                            disabled={clusterIdx === 0}
+                                                            onClick={() => handleMoveSubjectHorizontal(clusterIdx, subIdx, -1)}
+                                                            className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
+                                                            title="Mover al semestre anterior"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">arrow_back</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={clusterIdx === courses.length - 1}
+                                                            onClick={() => handleMoveSubjectHorizontal(clusterIdx, subIdx, 1)}
+                                                            className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
+                                                            title="Mover al siguiente semestre"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                                                        </button>
+
+                                                        {/* Mover vertical 1 fila (incluso hacia o dejando espacio en blanco) */}
+                                                        <button
+                                                            type="button"
+                                                            disabled={rowIndex <= 1}
+                                                            onClick={() => handleMoveSubjectVertical(clusterIdx, subIdx, -1)}
+                                                            className="p-1 rounded hover:bg-surface-container disabled:opacity-20 text-[10px]"
+                                                            title="Subir 1 fila en la grilla"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">arrow_upward</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleMoveSubjectVertical(clusterIdx, subIdx, 1)}
+                                                            className="p-1 rounded hover:bg-surface-container text-[10px]"
+                                                            title="Bajar 1 fila en la grilla (deja espacio en blanco arriba si está libre)"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">arrow_downward</span>
+                                                        </button>
+
+                                                        {/* Insertar espacio en blanco justo arriba */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleInsertBlankAbove(clusterIdx, rowIndex)}
+                                                            className="p-1 rounded hover:bg-secondary/15 text-secondary text-[10px]"
+                                                            title="Insertar espacio en blanco arriba (empuja esta materia y las inferiores 1 fila hacia abajo)"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">space_bar</span>
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenEditSubject(clusterIdx, subIdx)}
+                                                            className="p-1 rounded hover:bg-primary/10 text-primary text-[10px]"
+                                                            title="Editar materia"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">edit</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteSubject(clusterIdx, subIdx)}
+                                                            className="p-1 rounded hover:bg-error/10 text-error text-[10px]"
+                                                            title="Eliminar materia (deja su celda en blanco)"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">delete</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
@@ -1143,18 +1470,35 @@ export default function PlanEditorPanel({
                                         </p>
                                     )}
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-primary uppercase mb-1">Créditos *</label>
-                                    <input
-                                        type="number"
-                                        value={editingSubject.subject.credits}
-                                        onChange={(e) => setEditingSubject({
-                                            ...editingSubject,
-                                            subject: { ...editingSubject.subject, credits: e.target.value }
-                                        })}
-                                        className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/50 text-on-surface text-sm focus:outline-none focus:border-primary"
-                                        required
-                                    />
+                                <div className="grid grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label className="block text-xs font-bold text-primary uppercase mb-1">Créditos *</label>
+                                        <input
+                                            type="number"
+                                            value={editingSubject.subject.credits}
+                                            onChange={(e) => setEditingSubject({
+                                                ...editingSubject,
+                                                subject: { ...editingSubject.subject, credits: e.target.value }
+                                            })}
+                                            className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/50 text-on-surface text-sm focus:outline-none focus:border-primary"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-secondary uppercase mb-1" title="Fila vertical en la columna del semestre (deja espacios en blanco si saltas filas)">
+                                            Fila (Grilla)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={editingSubject.subject.position_Y || 1}
+                                            onChange={(e) => setEditingSubject({
+                                                ...editingSubject,
+                                                subject: { ...editingSubject.subject, position_Y: Math.max(1, parseInt(e.target.value, 10) || 1) }
+                                            })}
+                                            className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/50 text-on-surface text-sm focus:outline-none focus:border-secondary"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

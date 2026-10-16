@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { navigate } from '../hooks/useRouter';
 import { CURRENT_VERSION } from './UpdatesModal';
 
 /**
@@ -194,16 +195,16 @@ const NavigationDrawer = ({
                             <button
                                 onClick={() => {
                                     onClose();
-                                    if (onOpenForum) onOpenForum();
+                                    navigate('/propuestas?tab=editor');
                                 }}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors group"
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium bg-primary/10 text-on-surface hover:bg-primary/20 transition-colors border border-primary/25"
                             >
                                 <div className="flex items-center gap-3.5">
-                                    <span className="material-symbols-outlined text-lg text-purple-500">forum</span>
-                                    <span>Foro Estudiantil</span>
+                                    <span className="material-symbols-outlined text-lg text-primary">edit_calendar</span>
+                                    <span className="font-semibold">Editor Visual de Planes</span>
                                 </div>
-                                <span className="text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-300 font-semibold px-2 py-0.5 rounded-full">
-                                    Debates
+                                <span className="text-[10px] bg-primary text-on-primary font-bold px-2 py-0.5 rounded-full">
+                                    Proponer / Crear
                                 </span>
                             </button>
 
@@ -220,6 +221,22 @@ const NavigationDrawer = ({
                                 </div>
                                 <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 font-semibold px-2 py-0.5 rounded-full">
                                     Votar
+                                </span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    if (onOpenForum) onOpenForum();
+                                }}
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors group"
+                            >
+                                <div className="flex items-center gap-3.5">
+                                    <span className="material-symbols-outlined text-lg text-purple-500">forum</span>
+                                    <span>Foro Estudiantil</span>
+                                </div>
+                                <span className="text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-300 font-semibold px-2 py-0.5 rounded-full">
+                                    Debates
                                 </span>
                             </button>
                         </div>

@@ -100,6 +100,16 @@ const Layout = ({
                         {/* Botones Rápidos y Menú Hamburguesa */}
                         <div className="flex items-center gap-1.5 sm:gap-2">
                             <button
+                                onClick={() => navigate('/propuestas?tab=editor')}
+                                aria-label="Proponer cambios o nuevo plan"
+                                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all active:scale-95"
+                                title="Abrir Editor Visual para proponer cambios o agregar un plan"
+                            >
+                                <span className="material-symbols-outlined text-lg">edit_calendar</span>
+                                <span className="text-xs font-semibold hidden md:inline">Proponer / Editar Plan</span>
+                            </button>
+
+                            <button
                                 onClick={handlePrint}
                                 aria-label="Imprimir mapa curricular"
                                 className="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"

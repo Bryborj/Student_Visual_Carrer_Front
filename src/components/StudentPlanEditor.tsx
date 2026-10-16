@@ -4,6 +4,8 @@ import PlanEditorPanel from './PlanEditorPanel';
 
 interface StudentPlanEditorProps {
     availablePlans?: any[];
+    initialCareer?: string;
+    initialTab?: 'proposals' | 'new_proposal';
     onGoHome: () => void;
 }
 
@@ -52,11 +54,15 @@ const Spinner = ({ className = '' }: { className?: string }) => (
     />
 );
 
-export default function StudentPlanEditor({ availablePlans = [], onGoHome }: StudentPlanEditorProps) {
-    const [activeTab, setActiveTab] = useState<'proposals' | 'new_proposal'>('proposals');
+export default function StudentPlanEditor({ availablePlans = [], initialCareer = '', initialTab = 'proposals', onGoHome }: StudentPlanEditorProps) {
+    const [activeTab, setActiveTab] = useState<'proposals' | 'new_proposal'>(initialTab);
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [selectedCareerFilter, setSelectedCareerFilter] = useState<string>('Todas');
+
+    useEffect(() => {
+        setActiveTab(initialTab);
+    }, [initialTab]);
 
     // Auth State (Sesión de Alumno Institucional)
     const [user, setUser] = useState<{ username: string; emailHash: string } | null>(() => {
@@ -324,7 +330,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
                         }`}
                     >
-                        <span>➕</span> Proponer Cambio o Nuevo Plan
+                        <span>🛠️</span> Editor Visual de Planes (Proponer / Crear)
                     </button>
                 </div>
             </div>
@@ -511,6 +517,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                         mode="proposal"
                         password=""
                         availablePlans={availablePlans}
+                        initialCareer={initialCareer}
                         user={user}
                         onRequireLogin={() => setShowAuthModal(true)}
                         onOpenPreview={(data: any) => openPreview(data)}
