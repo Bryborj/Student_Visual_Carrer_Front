@@ -8,6 +8,7 @@ const Layout = ({
     onReset, 
     title = "Plan de Estudios", 
     logo_url = "", 
+    contributor = null,
     headerControls = null, 
     onOpenPlanSelector, 
     onOpenUpdates, 
@@ -17,6 +18,7 @@ const Layout = ({
     onGoHome 
 }) => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [showContributorModal, setShowContributorModal] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -34,6 +36,16 @@ const Layout = ({
             localStorage.setItem('theme', 'light');
         }
     }, [darkMode]);
+
+    useEffect(() => {
+        if (contributor && title) {
+            const seenKey = `contributor_seen_${title}_${contributor}`;
+            if (!sessionStorage.getItem(seenKey)) {
+                setShowContributorModal(true);
+                sessionStorage.setItem(seenKey, 'true');
+            }
+        }
+    }, [contributor, title]);
 
     const handlePrint = () => {
         window.print();
@@ -56,6 +68,17 @@ const Layout = ({
                             <h1 className="font-display-title text-xl sm:text-2xl font-bold text-on-surface leading-tight truncate max-w-xs sm:max-w-md lg:max-w-lg">
                                 {title}
                             </h1>
+                            {contributor && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowContributorModal(true)}
+                                    className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-colors cursor-pointer"
+                                    title="Ver créditos de contribución comunitaria"
+                                >
+                                    <span>🌟</span>
+                                    <span>Plan integrado gracias a <strong>@{contributor}</strong></span>
+                                </button>
+                            )}
                             {headerControls}
                         </div>
                     </div>
@@ -157,6 +180,40 @@ const Layout = ({
 
                 {children}
             </main>
+
+            {/* Modal de Créditos al Contribuidor */}
+            {showContributorModal && contributor && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fadeIn print:hidden"
+                    onClick={() => setShowContributorModal(false)}
+                >
+                    <div
+                        className="bg-surface-container-lowest border border-amber-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl text-center relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 mx-auto flex items-center justify-center text-white text-3xl shadow-lg mb-4">
+                            🌟
+                        </div>
+                        <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 mb-2">
+                            Aportación Estudiantil BUAP
+                        </span>
+                        <h3 className="text-xl font-bold text-on-surface mb-2">
+                            ¡Plan integrado gracias a @{contributor}!
+                        </h3>
+                        <p className="text-sm text-on-surface-variant leading-relaxed mb-5">
+                            Este mapa curricular (<strong className="text-on-surface">{title}</strong>) fue propuesto, estructurado o actualizado con el apoyo del usuario <strong className="text-amber-600 dark:text-amber-400">@{contributor}</strong> mediante el sistema de propuestas comunitarias.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowContributorModal(false)}
+                            className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-bold text-sm transition-all shadow-md cursor-pointer"
+                        >
+                            ¡Genial, explorar mapa curricular!
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <footer className="bg-surface-container-lowest border-t border-outline-variant w-full py-6 px-grid-margin flex flex-col md:flex-row justify-between items-center text-center md:text-left mt-auto print:hidden">
                 <p className="text-body-md font-body-md text-on-surface-variant">© {new Date().getFullYear()} Z-SH by <a href="https://github.com/Bryborj" className="text-primary hover:underline font-bold">Bryan Borges</a>. All credits and prerequisites are subject to administrative verification.</p>
                 <div className="flex gap-4 mt-4 md:mt-0">

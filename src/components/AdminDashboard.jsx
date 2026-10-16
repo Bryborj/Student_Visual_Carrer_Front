@@ -44,11 +44,14 @@ function AdminDashboard({ initialCareer = '', onPlanSaved }) {
         setStatus({ type: '', message: '' });
 
         try {
-            const res = await fetch('/api/admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'verify', password })
-            });
+            const [res] = await Promise.all([
+                fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'verify', password })
+                }),
+                new Promise((resolve) => setTimeout(resolve, 650))
+            ]);
             const data = await res.json();
             
             if (res.ok) {
@@ -138,9 +141,16 @@ function AdminDashboard({ initialCareer = '', onPlanSaved }) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 px-4 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                            className="w-full py-3 px-4 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            {loading ? 'Verificando...' : 'Entrar al Panel'}
+                            {loading ? (
+                                <>
+                                    <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    <span>Verificando credenciales...</span>
+                                </>
+                            ) : (
+                                'Entrar al Panel'
+                            )}
                         </button>
                     </form>
                     <div className="mt-6 flex flex-col gap-2">

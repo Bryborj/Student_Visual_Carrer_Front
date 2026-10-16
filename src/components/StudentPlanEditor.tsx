@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from '../hooks/useRouter';
+import ProposalPreviewModal from './ProposalPreviewModal';
 
 interface StudentPlanEditorProps {
     availablePlans?: any[];
@@ -16,6 +16,7 @@ interface Proposal {
     electives: any[];
     minCredits?: number;
     maxCredits?: number;
+    isNewPlan?: boolean;
     status: string;
     votesFor: number;
     votesAgainst: number;
@@ -25,6 +26,30 @@ interface Proposal {
     resolvedAt?: string;
     adminFeedback?: string;
 }
+
+interface PreviewState {
+    career: string;
+    author?: string;
+    reason?: string;
+    isNewPlan: boolean;
+    courses: any[];
+    originalCourses: any[] | null;
+    loadingOriginal: boolean;
+}
+
+// Tiempo mínimo que se muestra el estado de carga en autenticación para evitar parpadeos.
+const MIN_AUTH_LOADING_MS = 700;
+const withMinDelay = async <T,>(promise: Promise<T>, ms = MIN_AUTH_LOADING_MS): Promise<T> => {
+    const [result] = await Promise.all([promise, new Promise(r => setTimeout(r, ms))]);
+    return result;
+};
+
+const Spinner = ({ className = '' }: { className?: string }) => (
+    <span
+        className={`inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin ${className}`}
+        aria-hidden="true"
+    />
+);
 
 export default function StudentPlanEditor({ availablePlans = [], onGoHome }: StudentPlanEditorProps) {
     const [activeTab, setActiveTab] = useState<'proposals' | 'new_proposal'>('proposals');
@@ -49,6 +74,8 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
     const [authLoading, setAuthLoading] = useState(false);
 
     // Formulario de Nueva Propuesta
+    const [proposalType, setProposalType] = useState<'update' | 'new'>('update');
+    const [newCareerName, setNewCareerName] = useState<string>('');
     const [selectedCareer, setSelectedCareer] = useState<string>(
         availablePlans.length > 0 ? availablePlans[0].career : 'Ingeniería en Ciencias de la Computación'
     );
@@ -58,7 +85,57 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
     const [minCredits, setMinCredits] = useState<number>(250);
     const [maxCredits, setMaxCredits] = useState<number>(350);
     const [proposalStatus, setProposalStatus] = useState<{ type: string; message: string }>({ type: '', message: '' });
-    const [expandedProposalId, setExpandedProposalId] = useState<string | null>(null);
+    const [preview, setPreview] = useState<PreviewState | null>(null);
+
+    // Si la lista de planes llega después del montaje, sincronizar la carrera seleccionada
+    useEffect(() => {
+        if (availablePlans.length > 0 && !availablePlans.some(p => p.career === selectedCareer)) {
+            setSelectedCareer(availablePlans[0].career);
+        }
+    }, [availablePlans]);
+
+    // Abre el modal de vista previa y, si es una actualización, carga el plan oficial para comparar
+    const openPreview = async (data: Omit<PreviewState, 'originalCourses' | 'loadingOriginal'>) => {
+        setPreview({ ...data, originalCourses: null, loadingOriginal: !data.isNewPlan });
+        if (data.isNewPlan) return;
+        let originalCourses: any[] | null = null;
+        try {
+            const res = await fetch(`/api/plan?career=${encodeURIComponent(data.career)}`);
+            if (res.ok) originalCourses = (await res.json()).courses || [];
+        } catch (e) {
+            console.error('Error cargando plan oficial para comparar:', e);
+        }
+        setPreview(prev => (prev && prev.career === data.career ? { ...prev, originalCourses, loadingOriginal: false } : prev));
+    };
+
+    const handlePreviewDraft = () => {
+        let parsedCourses;
+        try {
+            parsedCourses = JSON.parse(jsonCourses);
+        } catch (e) {
+            setProposalStatus({ type: 'error', message: 'El formato JSON de las materias es inválido; corrígelo para ver la vista previa.' });
+            return;
+        }
+        const isNew = proposalType === 'new';
+        openPreview({
+            career: isNew ? (newCareerName.trim() || 'Nueva carrera') : selectedCareer,
+            author: user?.username,
+            reason,
+            isNewPlan: isNew,
+            courses: Array.isArray(parsedCourses) ? parsedCourses : []
+        });
+    };
+
+    const handleLoadTemplate = () => {
+        const template = Array.from({ length: 9 }, (_, i) => ({
+            cluster: i + 1,
+            content: [
+                { id: `M${i + 1}1`, subject: `Materia ${i + 1}.1`, credits: 6, theory: 3, lab: 2, autonomous: 0, required: null, position_Y: 1 }
+            ]
+        }));
+        setJsonCourses(JSON.stringify(template, null, 2));
+        setProposalStatus({ type: 'success', message: 'Plantilla de 9 semestres cargada. Reemplaza las materias de ejemplo con las reales.' });
+    };
 
     // Cargar propuestas
     const fetchProposals = async () => {
@@ -158,8 +235,15 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
             return;
         }
 
+        const isNew = proposalType === 'new';
+        const career = isNew ? newCareerName.trim() : selectedCareer;
+        if (!career) {
+            setProposalStatus({ type: 'error', message: 'Escribe el nombre de la nueva carrera.' });
+            return;
+        }
+
         if (!reason.trim()) {
-            setProposalStatus({ type: 'error', message: 'Debes proporcionar una justificación para la actualización.' });
+            setProposalStatus({ type: 'error', message: 'Debes proporcionar una justificación para la propuesta.' });
             return;
         }
 
@@ -169,6 +253,11 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
             parsedElectives = JSON.parse(jsonElectives);
         } catch (e) {
             setProposalStatus({ type: 'error', message: 'El formato JSON de las materias o electivas es inválido.' });
+            return;
+        }
+
+        if (!Array.isArray(parsedCourses) || parsedCourses.length === 0) {
+            setProposalStatus({ type: 'error', message: 'El plan propuesto debe incluir al menos un semestre con materias.' });
             return;
         }
 
@@ -184,14 +273,15 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({
-                    career: selectedCareer,
+                    career,
                     username: user.username,
                     emailHash: user.emailHash,
                     reason,
                     courses: parsedCourses,
                     electives: parsedElectives,
                     min_credits: minCredits,
-                    max_credits: maxCredits
+                    max_credits: maxCredits,
+                    is_new_plan: isNew
                 })
             });
 
@@ -199,9 +289,12 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
             if (res.ok) {
                 setProposalStatus({
                     type: 'success',
-                    message: '¡Propuesta publicada exitosamente! Tu voto a favor inicial fue registrado.'
+                    message: isNew
+                        ? `¡Propuesta de nueva carrera publicada! Si se aprueba, el plan aparecerá con tus créditos (@${user.username}).`
+                        : '¡Propuesta publicada exitosamente! Tu voto a favor inicial fue registrado.'
                 });
                 setReason('');
+                if (isNew) setNewCareerName('');
                 setActiveTab('proposals');
                 fetchProposals();
             } else {
@@ -222,11 +315,11 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
         setAuthLoading(true);
 
         try {
-            const res = await fetch('/api/auth', {
+            const res = await withMinDelay(fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'send_pin', email: authEmail })
-            });
+            }));
             const data = await res.json();
             if (res.ok) {
                 setPinSent(true);
@@ -251,7 +344,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
         setAuthLoading(true);
 
         try {
-            const res = await fetch('/api/auth', {
+            const res = await withMinDelay(fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -261,7 +354,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                     username: authUsername,
                     password: authPassword
                 })
-            });
+            }));
             const data = await res.json();
             if (res.ok) {
                 localStorage.setItem('forum_session', JSON.stringify(data.user));
@@ -286,7 +379,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
         setAuthLoading(true);
 
         try {
-            const res = await fetch('/api/auth', {
+            const res = await withMinDelay(fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -294,7 +387,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                     identifier: authUsername,
                     password: authPassword
                 })
-            });
+            }));
             const data = await res.json();
             if (res.ok) {
                 localStorage.setItem('forum_session', JSON.stringify(data.user));
@@ -384,7 +477,7 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
                         }`}
                     >
-                        <span>➕</span> Proponer Actualización de Plan
+                        <span>➕</span> Proponer Cambio o Nuevo Plan
                     </button>
                 </div>
             </div>
@@ -437,7 +530,6 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                         <div className="space-y-4">
                             {proposals.map((p) => {
                                 const totalVotes = (p.votesFor || 0) + (p.votesAgainst || 0);
-                                const isExpanded = expandedProposalId === p.id;
 
                                 return (
                                     <div
@@ -446,7 +538,12 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                     >
                                         <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                                             <div>
-                                                <div className="flex items-center gap-2 mb-1">
+                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                    {p.isNewPlan && (
+                                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-500 border border-purple-500/30">
+                                                            Nuevo Plan ✨
+                                                        </span>
+                                                    )}
                                                     {p.status === 'voting' && (
                                                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
                                                             En Votación 🗳️
@@ -521,25 +618,23 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                             </div>
                                         )}
 
-                                        {/* Expandable details */}
+                                        {/* Vista previa */}
                                         <div className="mt-3 flex items-center justify-between text-xs text-on-surface-variant pt-2 border-t border-outline-variant/20">
                                             <span>Materias: {p.courses?.length || 0} periodos • Créditos: {p.minCredits || 0} - {p.maxCredits || 0}</span>
                                             <button
-                                                onClick={() => setExpandedProposalId(isExpanded ? null : p.id)}
-                                                className="text-primary hover:underline font-semibold"
+                                                onClick={() => openPreview({
+                                                    career: p.career,
+                                                    author: p.author,
+                                                    reason: p.reason,
+                                                    isNewPlan: !!p.isNewPlan,
+                                                    courses: p.courses || []
+                                                })}
+                                                className="text-primary hover:underline font-semibold flex items-center gap-1"
                                             >
-                                                {isExpanded ? 'Ocultar Detalle' : 'Ver Materias Propuestas'}
+                                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                                Ver cambios y vista previa
                                             </button>
                                         </div>
-
-                                        {isExpanded && (
-                                            <div className="mt-4 p-4 rounded-xl bg-background border border-outline-variant/40">
-                                                <h4 className="text-xs font-bold text-primary uppercase mb-2">Contenido de la Propuesta (JSON):</h4>
-                                                <pre className="text-[11px] font-mono text-on-surface-variant max-h-60 overflow-y-auto p-3 bg-surface rounded-lg">
-                                                    {JSON.stringify({ courses: p.courses, electives: p.electives }, null, 2)}
-                                                </pre>
-                                            </div>
-                                        )}
                                     </div>
                                 );
                             })}
@@ -548,14 +643,48 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                 </main>
             )}
 
-            {/* Tab 2: Propose Plan Update */}
+            {/* Tab 2: Propose Plan Update or New Plan */}
             {activeTab === 'new_proposal' && (
                 <main className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-6 flex-1">
                     <div className="bg-surface p-6 sm:p-8 rounded-2xl border border-outline-variant/40 shadow-sm">
-                        <h2 className="text-xl font-bold text-on-surface mb-2">Sugerir Actualización de Plan de Estudios</h2>
+                        <h2 className="text-xl font-bold text-on-surface mb-2">Proponer Plan de Estudios o Actualización</h2>
                         <p className="text-xs sm:text-sm text-on-surface-variant mb-6">
-                            Los alumnos pueden proponer adiciones, reestructuración de materias, cambios en prerrequisitos o créditos. Tu propuesta entrará al sistema de votación comunitaria para auto-aprobación o revisión del staff.
+                            Los alumnos pueden proponer actualizaciones a planes existentes o incorporar nuevas carreras a la herramienta. Al aprobarse un nuevo plan, recibirás el crédito público en el visualizador con tu usuario.
                         </p>
+
+                        {/* Selector de Tipo de Propuesta */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                            <button
+                                type="button"
+                                onClick={() => setProposalType('update')}
+                                className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+                                    proposalType === 'update'
+                                        ? 'border-primary bg-primary/10 text-on-surface shadow-xs'
+                                        : 'border-outline-variant/40 bg-background text-on-surface-variant hover:border-primary/40'
+                                }`}
+                            >
+                                <span className="material-symbols-outlined text-primary text-2xl">edit_document</span>
+                                <div>
+                                    <div className="text-sm font-bold text-on-surface">Actualizar Carrera Existente</div>
+                                    <div className="text-[11px] text-on-surface-variant">Modificar materias, créditos o prerrequisitos</div>
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setProposalType('new')}
+                                className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+                                    proposalType === 'new'
+                                        ? 'border-primary bg-primary/10 text-on-surface shadow-xs'
+                                        : 'border-outline-variant/40 bg-background text-on-surface-variant hover:border-primary/40'
+                                }`}
+                            >
+                                <span className="material-symbols-outlined text-purple-500 text-2xl">add_circle</span>
+                                <div>
+                                    <div className="text-sm font-bold text-on-surface">Agregar Nueva Carrera</div>
+                                    <div className="text-[11px] text-on-surface-variant">Incorporar un plan nuevo con créditos a tu usuario</div>
+                                </div>
+                            </button>
+                        </div>
 
                         {proposalStatus.message && (
                             <div className={`p-4 rounded-xl text-xs sm:text-sm mb-6 ${
@@ -568,53 +697,75 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                         )}
 
                         <form onSubmit={handleSubmitProposal} className="space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {proposalType === 'update' ? (
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Carrera</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-xs font-semibold text-on-surface-variant">Carrera a actualizar</label>
+                                        <button
+                                            type="button"
+                                            onClick={handleLoadCurrentPlan}
+                                            className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">download</span>
+                                            Cargar datos actuales de este plan para editar
+                                        </button>
+                                    </div>
                                     <select
                                         value={selectedCareer}
                                         onChange={(e) => setSelectedCareer(e.target.value)}
-                                        className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/50 text-sm text-on-surface focus:outline-none focus:border-primary"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-outline-variant/50 text-sm text-on-surface focus:outline-none focus:border-primary"
                                     >
                                         {availablePlans.map((p, idx) => (
                                             <option key={idx} value={p.career}>{p.career}</option>
                                         ))}
                                     </select>
                                 </div>
+                            ) : (
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Modalidad</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-xs font-semibold text-on-surface-variant">
+                                            Nombre de la Nueva Carrera <span className="text-primary">*</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={handleLoadTemplate}
+                                            className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                                            Cargar plantilla base de 9 semestres
+                                        </button>
+                                    </div>
                                     <input
                                         type="text"
-                                        value={selectedModalidad}
-                                        onChange={(e) => setSelectedModalidad(e.target.value)}
-                                        className="w-full px-3.5 py-2 rounded-xl bg-background border border-outline-variant/50 text-sm text-on-surface focus:outline-none focus:border-primary"
-                                        placeholder="Escolarizada"
+                                        value={newCareerName}
+                                        onChange={(e) => setNewCareerName(e.target.value)}
+                                        placeholder="Ej. Licenciatura en Biomedicina, Ingeniería en Mecatrónica..."
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-outline-variant/50 text-sm text-on-surface focus:outline-none focus:border-primary"
                                         required
                                     />
+                                    {user && (
+                                        <p className="text-[11px] text-primary mt-1.5 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-xs">stars</span>
+                                            Al integrarse este plan, aparecerá acreditado gracias a <strong>@{user.username}</strong>.
+                                        </p>
+                                    )}
                                 </div>
-                            </div>
-
-                            <div className="flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={handleLoadCurrentPlan}
-                                    className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
-                                >
-                                    <span className="material-symbols-outlined text-sm">download</span>
-                                    Cargar datos actuales de este plan para editar
-                                </button>
-                            </div>
+                            )}
 
                             <div>
                                 <label className="block text-xs font-semibold text-on-surface-variant mb-1">
-                                    Motivo o Justificación del Cambio <span className="text-primary">*</span>
+                                    Motivo o Justificación <span className="text-primary">*</span>
                                 </label>
                                 <textarea
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     rows={3}
                                     className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-outline-variant/50 text-sm text-on-surface focus:outline-none focus:border-primary resize-y"
-                                    placeholder="Ejemplo: Se actualizan las materias optativas terminales y prerrequisitos del bloque 6 según acuerdo de academia 2024..."
+                                    placeholder={
+                                        proposalType === 'new'
+                                            ? 'Ejemplo: Incorporación del mapa curricular oficial Minerva de la Licenciatura en Biomedicina...'
+                                            : 'Ejemplo: Se actualizan las materias optativas terminales y prerrequisitos del bloque 6 según acuerdo de academia...'
+                                    }
                                     required
                                 />
                             </div>
@@ -649,22 +800,46 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                     onChange={(e) => setJsonCourses(e.target.value)}
                                     rows={10}
                                     className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-outline-variant/50 text-xs font-mono text-on-surface focus:outline-none focus:border-primary"
-                                    placeholder='[{"cluster": "Primer Periodo", "content": [...]}]'
+                                    placeholder='[{"cluster": 1, "content": [{"id": "PB", "subject": "Programación Básica", "credits": 6, "theory": 3, "lab": 2, "autonomous": 0, "required": null, "position_Y": 1}]}]'
                                     required
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full py-3.5 rounded-xl bg-primary text-on-primary font-bold text-sm hover:brightness-110 active:scale-98 transition-all shadow-md disabled:opacity-50"
-                            >
-                                {loading ? 'Publicando...' : 'Publicar Propuesta para Votación'}
-                            </button>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handlePreviewDraft}
+                                    className="sm:w-1/3 py-3.5 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold text-sm border border-outline-variant/40 flex items-center justify-center gap-2 transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-base text-primary">visibility</span>
+                                    Vista Previa
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-1 py-3.5 rounded-xl bg-primary text-on-primary font-bold text-sm hover:brightness-110 active:scale-98 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {loading && <Spinner />}
+                                    {loading ? 'Publicando propuesta...' : 'Publicar Propuesta para Votación'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </main>
             )}
+
+            {/* Modal de Vista Previa de Propuesta */}
+            <ProposalPreviewModal
+                isOpen={!!preview}
+                onClose={() => setPreview(null)}
+                career={preview?.career || ''}
+                author={preview?.author}
+                reason={preview?.reason}
+                isNewPlan={preview?.isNewPlan}
+                proposedCourses={preview?.courses || []}
+                originalCourses={preview?.originalCourses}
+                loadingOriginal={preview?.loadingOriginal}
+            />
 
             {/* Modal de Autenticación de Alumno */}
             {showAuthModal && (
@@ -740,9 +915,10 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                 <button
                                     type="submit"
                                     disabled={authLoading}
-                                    className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs sm:text-sm hover:brightness-110"
+                                    className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs sm:text-sm hover:brightness-110 disabled:opacity-60 flex items-center justify-center gap-2"
                                 >
-                                    {authLoading ? 'Verificando...' : 'Entrar'}
+                                    {authLoading && <Spinner />}
+                                    {authLoading ? 'Iniciando sesión...' : 'Entrar'}
                                 </button>
                             </form>
                         ) : (
@@ -763,9 +939,10 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                         <button
                                             type="submit"
                                             disabled={authLoading}
-                                            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs hover:brightness-110"
+                                            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs hover:brightness-110 disabled:opacity-60 flex items-center justify-center gap-2"
                                         >
-                                            {authLoading ? 'Generando PIN...' : 'Enviar PIN de Verificación'}
+                                            {authLoading && <Spinner />}
+                                            {authLoading ? 'Enviando PIN...' : 'Enviar PIN de Verificación'}
                                         </button>
                                     </form>
                                 ) : (
@@ -806,8 +983,9 @@ export default function StudentPlanEditor({ availablePlans = [], onGoHome }: Stu
                                         <button
                                             type="submit"
                                             disabled={authLoading}
-                                            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs hover:brightness-110"
+                                            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs hover:brightness-110 disabled:opacity-60 flex items-center justify-center gap-2"
                                         >
+                                            {authLoading && <Spinner />}
                                             {authLoading ? 'Creando cuenta...' : 'Completar Registro'}
                                         </button>
                                     </form>

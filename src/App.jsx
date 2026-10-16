@@ -174,6 +174,7 @@ function App() {
             onReset={resetPlan} 
             title={planData.career} 
             logo_url={planData.logo_url} 
+            contributor={planData.contributor_username}
             onGoHome={() => navigate('/')}
             onOpenPlanSelector={() => setIsPlanModalOpen(true)}
             onOpenUpdates={() => setIsUpdatesModalOpen(true)}

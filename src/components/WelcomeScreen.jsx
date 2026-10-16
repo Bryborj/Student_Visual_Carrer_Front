@@ -36,15 +36,6 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                             <span className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest mt-1">Portal Académico</span>
                         </div>
                     </div>
-                    <div className="hidden md:flex items-center gap-8">
-                        <Link to="/visualizador" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Visualizador</Link>
-                        <Link to="/foro" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Foro</Link>
-                        <Link to="/propuestas" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200">Actualizar Plan</Link>
-                        <Link to="/admin" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors duration-200 flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-base text-primary">tune</span>
-                            Gestión de Planes
-                        </Link>
-                    </div>
                     <div className="flex items-center gap-2 sm:gap-3">
                         <button
                             onClick={() => setDarkMode(!darkMode)}

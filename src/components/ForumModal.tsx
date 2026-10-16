@@ -149,17 +149,20 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
 
     setAuthLoading(true);
     try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'register',
-          email: regEmail,
-          pin: regPin,
-          username: regUsername,
-          password: regPassword
-        })
-      });
+      const [res] = await Promise.all([
+        fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'register',
+            email: regEmail,
+            pin: regPin,
+            username: regUsername,
+            password: regPassword
+          })
+        }),
+        new Promise((resolve) => setTimeout(resolve, 650))
+      ]);
       const data = await res.json();
       if (res.ok && data.user) {
         localStorage.setItem('forum_session', JSON.stringify(data.user));
@@ -195,15 +198,18 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
 
     setAuthLoading(true);
     try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'login',
-          identifier: loginIdentifier,
-          password: loginPassword
-        })
-      });
+      const [res] = await Promise.all([
+        fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'login',
+            identifier: loginIdentifier,
+            password: loginPassword
+          })
+        }),
+        new Promise((resolve) => setTimeout(resolve, 650))
+      ]);
       const data = await res.json();
       if (res.ok && data.user) {
         localStorage.setItem('forum_session', JSON.stringify(data.user));
@@ -497,9 +503,16 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full py-3 rounded-xl bg-[#ec5b13] hover:bg-orange-600 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
+                    className="w-full py-3 rounded-xl bg-[#ec5b13] hover:bg-orange-600 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {authLoading ? 'Verificando...' : 'Entrar al Foro'}
+                    {authLoading ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <span>Verificando credenciales...</span>
+                      </>
+                    ) : (
+                      'Entrar al Foro'
+                    )}
                   </button>
                 </form>
               ) : (
@@ -568,9 +581,16 @@ export const ForumModal: React.FC<ForumModalProps> = ({ isOpen, onClose, current
                       <button
                         type="submit"
                         disabled={authLoading}
-                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
+                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
-                        {authLoading ? 'Registrando...' : 'Completar Registro'}
+                        {authLoading ? (
+                          <>
+                            <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            <span>Registrando cuenta...</span>
+                          </>
+                        ) : (
+                          'Completar Registro'
+                        )}
                       </button>
                     </div>
                   )}
