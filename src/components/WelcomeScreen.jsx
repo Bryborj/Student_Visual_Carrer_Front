@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, navigate } from '../hooks/useRouter';
 import NavigationDrawer from './NavigationDrawer';
 import wolfLogo from '../resources/wolf.svg';
+import { IconBulbFilled } from '@tabler/icons-react';
 
 const WelcomeScreen = ({ availablePlansCount = 0 }) => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -29,8 +30,8 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
             <header className="fixed top-0 w-full z-40 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 transition-colors duration-300">
                 <nav className="flex justify-between items-center px-4 sm:px-8 py-3.5 max-w-7xl mx-auto">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center p-1.5 border border-outline-variant/30 shadow-xs">
-                            <img src={wolfLogo} alt="Lobo BUAP" className="w-full h-full object-contain filter dark:brightness-110" />
+                        <div className="w-12 h-12 flex items-center justify-center">
+                            <img src="wolf.svg" alt="Lobo BUAP" className="w-full h-full object-contain filter dark:invert" />
                         </div>
                         <div className="flex flex-col">
                             <span className="font-headline-md text-lg sm:text-xl font-bold text-on-surface leading-none serif-title">Comunidad BUAP</span>
@@ -98,10 +99,6 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 w-full">
                     {/* Hero Header & Welcome Badge */}
                     <div className="text-center mb-12 sm:mb-16 space-y-6">
-                        <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-surface-container border border-outline-variant/40 text-on-surface shadow-xs">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>Plataforma Universitaria Independiente • BUAP</span>
-                        </div>
 
                         <h1 className="font-headline-lg text-3xl sm:text-5xl md:text-6xl max-w-4xl mx-auto leading-[1.15] serif-title text-on-surface font-bold tracking-tight">
                             Cartografía Curricular y Espacio Abierto para la <span className="italic font-medium text-on-surface/85">Comunidad BUAP</span>
@@ -117,10 +114,7 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                                 <span className="material-symbols-outlined text-sm text-on-surface">school</span>
                                 <span>{availablePlansCount > 0 ? `${availablePlansCount} Planes Registrados` : 'Planes de Múltiples Facultades'}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/30">
-                                <span className="material-symbols-outlined text-sm text-emerald-500">task_alt</span>
-                                <span>Validación de Prerrequisitos en Vivo</span>
-                            </div>
+                            
                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/30">
                                 <span className="material-symbols-outlined text-sm text-amber-500">terminal</span>
                                 <span>100% Código Abierto en GitHub</span>
@@ -210,11 +204,6 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                                 <span className="material-symbols-outlined text-amber-500 text-3xl">edit_calendar</span>
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                        Participación y Gobernanza
-                                    </span>
-                                </div>
                                 <h3 className="font-headline-md text-xl sm:text-2xl text-on-surface serif-title font-bold">
                                     Editor Visual de Planes y Propuestas Estudiantiles
                                 </h3>
@@ -260,7 +249,6 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                             </div>
                             <div className="shrink-0 flex items-center gap-2">
                                 <span className="inline-flex items-center gap-1.5 text-xs text-on-surface-variant font-metadata-label bg-surface-container px-3 py-1.5 rounded-lg border border-outline-variant/30">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                     <span>Pull Requests Bienvenidas</span>
                                 </span>
                             </div>
@@ -337,7 +325,8 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
 
                         {/* Callout notice */}
                         <div className="flex items-center gap-3 text-xs text-on-surface-variant bg-surface-container p-3.5 rounded-xl border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-amber-500 text-lg">lightbulb</span>
+                            
+                            <IconBulbFilled className="dark:text-amber-400" />
                             <span>
                                 ¿Encontraste un error en los prerrequisitos o créditos de tu carrera? Abre un <a href="https://github.com/Bryborj/Student_Visual_Carrer_Front/issues" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-on-surface">Issue en GitHub</a> o envía tu propuesta directamente desde el editor visual.
                             </span>
@@ -351,8 +340,8 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                 <div className="flex flex-col md:flex-row justify-between items-center px-4 sm:px-8 py-10 max-w-7xl mx-auto gap-6">
                     <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
                         <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center p-1 border border-outline-variant/30">
-                                <img src={wolfLogo} alt="Lobo BUAP" className="w-full h-full object-contain filter dark:brightness-110" />
+                            <div className="w-12 h-12 flex items-center justify-center p-1">
+                                <img src="wolf.svg" alt="Lobo BUAP" className="w-full h-full filter dark:invert" />
                             </div>
                             <span className="font-headline-md text-xl text-on-surface serif-title font-bold">Comunidad BUAP</span>
                         </div>

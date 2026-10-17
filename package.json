@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "Visualizador de Planes de Estudio BUAP - Frontend",
   "dependencies": {
+    "@tabler/icons-react": "^3.49.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
