@@ -224,10 +224,22 @@ const Layout = ({
                 </div>
             )}
 
-            <footer className="bg-surface-container-lowest border-t border-outline-variant w-full py-6 px-grid-margin flex flex-col md:flex-row justify-between items-center text-center md:text-left mt-auto print:hidden">
-                <p className="text-body-md font-body-md text-on-surface-variant">© {new Date().getFullYear()} Z-SH by <a href="https://github.com/Bryborj" className="text-primary hover:underline font-bold">Bryan Borges</a>. All credits and prerequisites are subject to administrative verification.</p>
-                <div className="flex gap-4 mt-4 md:mt-0">
-                    <a className="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Proyecto realizado por puro amor al arte</a>
+            <footer className="bg-surface-container-lowest border-t border-outline-variant/30 w-full py-6 px-4 md:px-grid-margin flex flex-col md:flex-row justify-between items-center text-center md:text-left mt-auto print:hidden gap-4">
+                <p className="text-sm font-body-md text-on-surface-variant">
+                    © {new Date().getFullYear()} Z-SH por <a href="https://github.com/Bryborj" target="_blank" rel="noopener noreferrer" className="text-on-surface hover:underline font-bold">Bryan Borges</a>. Proyecto de código abierto independiente.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 text-xs font-metadata-label text-on-surface-variant">
+                    <a href="https://github.com/Bryborj/Student_Visual_Carrer_Front" target="_blank" rel="noopener noreferrer" className="hover:text-on-surface hover:underline transition-colors">
+                        GitHub Frontend
+                    </a>
+                    <span>•</span>
+                    <a href="https://github.com/Bryborj/Student_Visual_Carrer_Back" target="_blank" rel="noopener noreferrer" className="hover:text-on-surface hover:underline transition-colors">
+                        GitHub Backend
+                    </a>
+                    <span>•</span>
+                    <a href="https://github.com/Bryborj/Student_Visual_Carrer_Front/issues" target="_blank" rel="noopener noreferrer" className="hover:text-on-surface hover:underline transition-colors">
+                        Reportar Asignatura / Bug
+                    </a>
                 </div>
             </footer>
         </div>
