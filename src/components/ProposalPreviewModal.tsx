@@ -64,10 +64,10 @@ const describeDiff = (before: Subject & { cluster: any }, after: Subject & { clu
 };
 
 const CHANGE_STYLES: Record<ChangeType, string> = {
-    added: 'border-l-green-500 bg-green-500/10',
+    added: 'border-l-emerald-500 bg-emerald-500/10',
     modified: 'border-l-amber-500 bg-amber-500/10',
-    removed: 'border-l-red-500 bg-red-500/10 opacity-60 line-through',
-    unchanged: 'border-l-outline-variant bg-surface-container'
+    removed: 'border-l-rose-500 bg-rose-500/10 opacity-60 line-through',
+    unchanged: 'border-l-outline-variant bg-surface-container-low'
 };
 
 export default function ProposalPreviewModal({
@@ -128,38 +128,42 @@ export default function ProposalPreviewModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
+            className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn"
             onClick={onClose}
             role="dialog"
             aria-modal="true"
             aria-labelledby="proposal-preview-title"
         >
             <div
-                className="bg-surface rounded-2xl border border-outline-variant/40 w-full max-w-6xl max-h-[92vh] flex flex-col shadow-2xl"
+                className="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 w-full max-w-6xl max-h-[92vh] flex flex-col shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-outline-variant/30">
                     <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
                                 isNewPlan
-                                    ? 'bg-purple-500/10 text-purple-500 border-purple-500/30'
-                                    : 'bg-primary/10 text-primary border-primary/20'
+                                    ? 'bg-purple-500/12 text-purple-700 dark:text-purple-300 border-purple-500/25'
+                                    : 'bg-surface-container text-on-surface-variant border-outline-variant/40'
                             }`}>
-                                {isNewPlan ? 'Nuevo plan' : 'Actualización'}
+                                {isNewPlan ? 'Nuevo Plan Curricular' : 'Actualización de Malla'}
                             </span>
-                            {author && <span className="text-xs text-on-surface-variant">por <strong className="text-primary">@{author}</strong></span>}
+                            {author && (
+                                <span className="text-xs text-on-surface-variant">
+                                    Propuesto por <strong className="text-on-surface">@{author}</strong>
+                                </span>
+                            )}
                         </div>
-                        <h2 id="proposal-preview-title" className="text-lg sm:text-xl font-bold text-on-surface truncate">
-                            Vista previa: {career}
+                        <h2 id="proposal-preview-title" className="font-display-title text-lg sm:text-2xl font-bold text-on-surface truncate">
+                            {career}
                         </h2>
                         {reason && <p className="text-xs text-on-surface-variant mt-1 line-clamp-2">{reason}</p>}
                     </div>
                     <button
                         onClick={onClose}
                         aria-label="Cerrar vista previa"
-                        className="p-2 rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface shrink-0"
+                        className="p-2 rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface shrink-0 transition-colors cursor-pointer"
                     >
                         <span className="material-symbols-outlined">close</span>
                     </button>
@@ -167,50 +171,52 @@ export default function ProposalPreviewModal({
 
                 {/* Summary + Tabs */}
                 <div className="px-5 sm:px-6 pt-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-center">
-                        <div className="p-2.5 rounded-xl bg-surface-container border border-outline-variant/30">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4 text-center">
+                        <div className="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/35">
                             <div className="text-lg font-bold text-on-surface">{analysis.proposedCount}</div>
-                            <div className="text-[10px] uppercase text-on-surface-variant">Materias</div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Materias</div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-surface-container border border-outline-variant/30">
+                        <div className="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/35">
                             <div className="text-lg font-bold text-on-surface">
                                 {analysis.proposedCredits}
                                 {hasOriginal && analysis.proposedCredits !== analysis.originalCredits && (
-                                    <span className={`text-xs ml-1 ${analysis.proposedCredits > analysis.originalCredits ? 'text-green-500' : 'text-red-500'}`}>
+                                    <span className={`text-xs ml-1 ${analysis.proposedCredits > analysis.originalCredits ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                         ({analysis.proposedCredits > analysis.originalCredits ? '+' : ''}{analysis.proposedCredits - analysis.originalCredits})
                                     </span>
                                 )}
                             </div>
-                            <div className="text-[10px] uppercase text-on-surface-variant">Créditos</div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Créditos</div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-green-500/10 border border-green-500/30">
-                            <div className="text-lg font-bold text-green-600 dark:text-green-400">{analysis.added.length}</div>
-                            <div className="text-[10px] uppercase text-on-surface-variant">Agregadas</div>
+                        <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
+                            <div className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{analysis.added.length}</div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Agregadas</div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                            <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                            <div className="text-lg font-bold text-amber-700 dark:text-amber-300">
                                 {analysis.modified.length}{hasOriginal ? ` / ${analysis.removed.length}` : ''}
                             </div>
-                            <div className="text-[10px] uppercase text-on-surface-variant">
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">
                                 {hasOriginal ? 'Modif. / Removidas' : 'Modificadas'}
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex border-b border-outline-variant/40 gap-6">
+                    <div className="flex bg-surface-container-low p-1 rounded-xl border border-outline-variant/35 inline-flex gap-1 mb-1">
                         {[
-                            { id: 'map', label: 'Mapa curricular', icon: 'account_tree' },
-                            { id: 'changes', label: 'Resumen de cambios', icon: 'difference' }
+                            { id: 'map', label: 'Mapa Curricular Propuesto', icon: 'account_tree' },
+                            { id: 'changes', label: 'Desglose de Modificaciones', icon: 'difference' }
                         ].map(t => (
                             <button
                                 key={t.id}
                                 onClick={() => setTab(t.id as 'map' | 'changes')}
-                                className={`pb-2.5 text-sm font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
-                                    tab === t.id ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                                className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    tab === t.id
+                                        ? 'bg-surface-container-lowest text-on-surface shadow-2xs border border-outline-variant/40'
+                                        : 'text-on-surface-variant hover:text-on-surface'
                                 }`}
                             >
-                                <span className="material-symbols-outlined text-base">{t.icon}</span>
-                                {t.label}
+                                <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
+                                <span>{t.label}</span>
                             </button>
                         ))}
                     </div>
@@ -229,10 +235,10 @@ export default function ProposalPreviewModal({
                         ) : (
                             <>
                                 {hasOriginal && (
-                                    <div className="flex flex-wrap gap-3 mb-4 text-[11px] text-on-surface-variant">
-                                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-500" /> Agregada</span>
-                                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-amber-500" /> Modificada</span>
-                                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-outline-variant" /> Sin cambios</span>
+                                    <div className="flex flex-wrap gap-4 mb-4 text-[11px] font-medium text-on-surface-variant">
+                                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" /> Agregada</span>
+                                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-xs bg-amber-500" /> Modificada</span>
+                                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-xs bg-outline-variant" /> Sin cambios</span>
                                     </div>
                                 )}
                                 <div className="flex gap-3 overflow-x-auto pb-2">
@@ -245,7 +251,7 @@ export default function ProposalPreviewModal({
                                             : 0;
                                         return (
                                             <div key={String(c.cluster)} className="min-w-[175px] w-[175px] shrink-0">
-                                                <h3 className="text-xs font-bold text-center text-on-surface-variant uppercase mb-2 py-1.5 rounded-lg bg-surface-container-high">
+                                                <h3 className="text-xs font-bold text-center text-on-surface-variant uppercase mb-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30">
                                                     Semestre {c.cluster}
                                                 </h3>
                                                 <div className="space-y-2">
@@ -258,7 +264,7 @@ export default function ProposalPreviewModal({
                                                             return (
                                                                 <div
                                                                     key={`empty-${c.cluster}-${rowIndex}`}
-                                                                    className="min-h-[76px] rounded-lg border border-dashed border-outline-variant/25 bg-surface/20 flex items-center justify-center text-[10px] font-mono text-on-surface-variant/40"
+                                                                    className="min-h-[76px] rounded-lg border border-dashed border-outline-variant/30 bg-surface-container-low/30 flex items-center justify-center text-[10px] font-mono text-on-surface-variant/40"
                                                                 >
                                                                     Fila {rowIndex} • Vacío
                                                                 </div>
@@ -291,19 +297,19 @@ export default function ProposalPreviewModal({
                     ) : (
                         <div className="space-y-6">
                             {!hasOriginal && (
-                                <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs text-on-surface">
+                                <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs text-on-surface">
                                     {isNewPlan
-                                        ? 'Es una carrera nueva: todas las materias se agregarán a la herramienta.'
+                                        ? 'Es una carrera nueva: todas las materias se integrarán al catálogo oficial al ser validada.'
                                         : 'No fue posible cargar el plan oficial para compararlo; se listan todas las materias propuestas.'}
                                 </div>
                             )}
-                            <ChangeSection title="Materias agregadas" color="text-green-600 dark:text-green-400" icon="add_circle"
+                            <ChangeSection title="Materias agregadas" color="text-emerald-700 dark:text-emerald-300" icon="add_circle"
                                 items={analysis.added.map(s => ({ s }))} />
                             {hasOriginal && (
                                 <>
-                                    <ChangeSection title="Materias modificadas" color="text-amber-600 dark:text-amber-400" icon="edit"
+                                    <ChangeSection title="Materias modificadas" color="text-amber-700 dark:text-amber-300" icon="edit"
                                         items={analysis.modified.map(m => ({ s: m.subject, diffs: m.diffs }))} />
-                                    <ChangeSection title="Materias removidas" color="text-red-600 dark:text-red-400" icon="remove_circle"
+                                    <ChangeSection title="Materias removidas" color="text-rose-700 dark:text-rose-300" icon="remove_circle"
                                         items={analysis.removed.map(s => ({ s }))} />
                                 </>
                             )}
@@ -323,7 +329,7 @@ function ChangeSection({ title, color, icon, items }: {
 }) {
     return (
         <section>
-            <h3 className={`text-sm font-bold flex items-center gap-1.5 mb-2 ${color}`}>
+            <h3 className={`text-sm font-bold flex items-center gap-1.5 mb-2.5 ${color}`}>
                 <span className="material-symbols-outlined text-base">{icon}</span>
                 {title} ({items.length})
             </h3>
@@ -332,13 +338,13 @@ function ChangeSection({ title, color, icon, items }: {
             ) : (
                 <ul className="space-y-1.5">
                     {items.map(({ s, diffs }) => (
-                        <li key={subjectKey(s)} className="p-2.5 rounded-lg bg-surface-container border border-outline-variant/30 text-xs">
+                        <li key={subjectKey(s)} className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/35 text-xs">
                             <div className="flex justify-between gap-2">
                                 <span className="font-semibold text-on-surface">{subjectName(s)}</span>
                                 <span className="text-on-surface-variant shrink-0">Sem. {(s as any).cluster} • {subjectCredits(s)} CR</span>
                             </div>
                             {diffs && diffs.length > 0 && (
-                                <ul className="mt-1 pl-3 list-disc text-on-surface-variant">
+                                <ul className="mt-1.5 pl-4 list-disc text-on-surface-variant space-y-0.5">
                                     {diffs.map(d => <li key={d}>{d}</li>)}
                                 </ul>
                             )}

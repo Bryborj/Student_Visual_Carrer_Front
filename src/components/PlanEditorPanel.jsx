@@ -749,10 +749,10 @@ export default function PlanEditorPanel({
     return (
         <div className="space-y-6">
             {/* Barra superior de Modo y Selección */}
-            <div className="bg-surface p-5 rounded-2xl border border-primary/15 shadow-sm space-y-4">
+            <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-2xs space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* Toggle Modificar vs Crear */}
-                    <div className="inline-flex p-1 rounded-xl bg-surface-container border border-outline-variant/30">
+                    <div className="inline-flex p-1 rounded-xl bg-surface-container-low border border-outline-variant/35">
                         <button
                             type="button"
                             onClick={() => {
@@ -763,13 +763,14 @@ export default function PlanEditorPanel({
                                     handleLoadPlan(targetCareer);
                                 }
                             }}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
                                 editorMode === 'modify'
-                                    ? 'bg-primary text-on-primary shadow-sm'
+                                    ? 'bg-surface-container-lowest text-on-surface shadow-2xs border border-outline-variant/40'
                                     : 'text-on-surface-variant hover:text-on-surface'
                             }`}
                         >
-                            <span>✏️</span> {isProposalMode ? 'Modificar Plan Existente' : 'Modificar Plan Existente'}
+                            <span className="material-symbols-outlined text-[16px] text-primary">edit_note</span>
+                            <span>{isProposalMode ? 'Modificar Plan Existente' : 'Modificar Plan Existente'}</span>
                         </button>
                         <button
                             type="button"
@@ -777,13 +778,14 @@ export default function PlanEditorPanel({
                                 setEditorMode('create');
                                 initBlankPlan(9);
                             }}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
                                 editorMode === 'create'
-                                    ? 'bg-primary text-on-primary shadow-sm'
+                                    ? 'bg-surface-container-lowest text-on-surface shadow-2xs border border-outline-variant/40'
                                     : 'text-on-surface-variant hover:text-on-surface'
                             }`}
                         >
-                            <span>➕</span> {isProposalMode ? 'Proponer Nuevo Plan' : 'Crear Nuevo Plan'}
+                            <span className="material-symbols-outlined text-[16px] text-primary">add_circle</span>
+                            <span>{isProposalMode ? 'Proponer Nuevo Plan' : 'Crear Nuevo Plan'}</span>
                         </button>
                     </div>
 
@@ -909,21 +911,22 @@ export default function PlanEditorPanel({
             </div>
 
             {/* Formulario de Metadatos del Plan */}
-            <div className="bg-surface p-5 rounded-2xl border border-outline-variant/30 shadow-sm space-y-4">
-                <div className="flex flex-wrap items-center justify-between border-b border-outline-variant/20 pb-3 gap-2">
-                    <h2 className="text-base font-bold text-on-surface flex items-center gap-2">
-                        <span>📋</span> {isProposalMode ? 'Datos del Plan y Justificación de la Propuesta' : 'Información General del Plan'}
+            <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-2xs space-y-4">
+                <div className="flex flex-wrap items-center justify-between border-b border-outline-variant/25 pb-3 gap-2">
+                    <h2 className="font-display-title text-base sm:text-lg font-bold text-on-surface flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg text-primary">description</span>
+                        <span>{isProposalMode ? 'Datos del Plan y Justificación de la Propuesta' : 'Información General del Plan'}</span>
                     </h2>
                     {/* Resumen de estadísticas */}
                     <div className="flex items-center gap-4 text-xs">
                         <span className="text-on-surface-variant">
-                            Materias: <strong className="text-primary">{totalSubjectsCount}</strong>
+                            Materias: <strong className="text-on-surface">{totalSubjectsCount}</strong>
                         </span>
                         <span className="text-on-surface-variant">
-                            Créditos asignados: <strong className="text-secondary">{calculatedCredits}</strong>
+                            Créditos asignados: <strong className="text-on-surface">{calculatedCredits}</strong>
                         </span>
                         <span className="text-on-surface-variant">
-                            Semestres: <strong className="text-primary">{courses.length}</strong>
+                            Semestres: <strong className="text-on-surface">{courses.length}</strong>
                         </span>
                     </div>
                 </div>

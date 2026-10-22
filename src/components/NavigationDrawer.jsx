@@ -199,7 +199,11 @@ const NavigationDrawer = ({
                                     onClose();
                                     navigate('/propuestas?tab=editor');
                                 }}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium bg-primary/10 text-on-surface hover:bg-primary/20 transition-colors border border-primary/25"
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors border ${
+                                    activeRoute === 'proposals-editor'
+                                        ? 'bg-primary/15 text-primary font-semibold border-primary/35 shadow-2xs'
+                                        : 'bg-primary/10 text-on-surface hover:bg-primary/20 border-primary/25'
+                                }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <span className="material-symbols-outlined text-lg text-primary">edit_calendar</span>
@@ -214,8 +218,13 @@ const NavigationDrawer = ({
                                 onClick={() => {
                                     onClose();
                                     if (onOpenProposals) onOpenProposals();
+                                    else navigate('/propuestas');
                                 }}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors"
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                                    activeRoute === 'proposals'
+                                        ? 'bg-primary/10 text-primary font-semibold'
+                                        : 'text-on-surface hover:bg-surface-container-high'
+                                }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <span className="material-symbols-outlined text-lg text-amber-500">how_to_vote</span>
