@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { IconArrowBarRight } from "@tabler/icons-react";
 import { navigate } from "../hooks/useRouter";
 import NavigationDrawer from "./NavigationDrawer";
+import UpdatesModal, { CURRENT_VERSION } from "./UpdatesModal";
 
 const Layout = ({
   children,
@@ -21,7 +22,16 @@ const Layout = ({
   onGoHome,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLocalUpdatesOpen, setIsLocalUpdatesOpen] = useState(false);
   const [showContributorModal, setShowContributorModal] = useState(false);
+
+  const handleOpenUpdates = () => {
+    if (onOpenUpdates) {
+      onOpenUpdates();
+    } else {
+      setIsLocalUpdatesOpen(true);
+    }
+  };
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return (
@@ -193,7 +203,7 @@ const Layout = ({
         onOpenForum={onOpenForum || (() => navigate("/foro"))}
         onOpenProposals={onOpenProposals || (() => navigate("/propuestas"))}
         onOpenAdmin={onOpenAdmin || (() => navigate("/admin"))}
-        onOpenUpdates={onOpenUpdates}
+        onOpenUpdates={handleOpenUpdates}
         onReset={onReset}
         onPrint={activeRoute === "visualizer" ? handlePrint : undefined}
         darkMode={darkMode}
@@ -323,8 +333,22 @@ const Layout = ({
           >
             Reportar Asignatura / Bug
           </a>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={handleOpenUpdates}
+            className="hover:text-on-surface hover:underline transition-colors font-semibold text-on-surface cursor-pointer"
+            title="Ver novedades de la versión"
+          >
+            {CURRENT_VERSION.startsWith("v") ? CURRENT_VERSION : `v${CURRENT_VERSION}`}
+          </button>
         </div>
       </footer>
+
+      <UpdatesModal
+        isOpen={isLocalUpdatesOpen}
+        onClose={() => setIsLocalUpdatesOpen(false)}
+      />
     </div>
   );
 };

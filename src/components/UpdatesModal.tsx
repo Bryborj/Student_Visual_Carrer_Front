@@ -1,6 +1,5 @@
 import React from "react";
 import updatesData from "../data/updates.json";
-import wolfLogo from "../resources/wolf.svg";
 
 export interface UpdateItem {
   version: string;
@@ -11,7 +10,7 @@ export interface UpdateItem {
 
 const UPDATES: UpdateItem[] = updatesData as UpdateItem[];
 
-export const CURRENT_VERSION = UPDATES[0]?.version || "v1.2.0";
+export const CURRENT_VERSION = UPDATES[0]?.version || "v2.0.0";
 
 interface UpdatesModalProps {
   isOpen: boolean;
@@ -25,119 +24,118 @@ export const UpdatesModal: React.FC<UpdatesModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 print:hidden animate-fadeIn">
-      <div className="bg-surface border border-outline-variant rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-2xl flex flex-col gap-6 max-h-[88vh] overflow-hidden relative">
-        {/* Glow background effects */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+    <div
+      className="fixed inset-0 z-100 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 print:hidden animate-fadeIn"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="updates-modal-title"
+    >
+      <div
+        className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl shadow-2xl p-6 sm:p-7 w-full max-w-2xl flex flex-col gap-5 max-h-[88vh] overflow-hidden relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-outline-variant pb-4 relative z-10">
+        <div className="flex justify-between items-start border-b border-outline-variant/30 pb-4 gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <span className="material-symbols-outlined text-2xl animate-pulse">
-                campaign
+            <div className="w-11 h-11 rounded-xl bg-surface-container text-on-surface flex items-center justify-center border border-outline-variant/40 shrink-0">
+              <span className="material-symbols-outlined text-xl">
+                history_edu
               </span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-display-title font-bold text-on-surface tracking-tight">
-                  Novedades & Evolución
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2
+                  id="updates-modal-title"
+                  className="text-xl sm:text-2xl font-display-title font-bold text-on-surface tracking-tight"
+                >
+                  Novedades y Registro de Versiones
                 </h2>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-surface-container text-on-surface border border-outline-variant/40 font-metadata-label">
                   {CURRENT_VERSION}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-on-surface-variant">
-                Descubre las mejoras implementadas para tu plan de estudios
+              <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                Historial de mejoras y evolución de la plataforma académica BUAP
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all hover:scale-110"
+            className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer shrink-0"
             aria-label="Cerrar modal"
           >
-            <span className="material-symbols-outlined text-2xl">close</span>
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
 
-        {/* Updates Timeline */}
-        <div className="flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar relative z-10 my-1">
+        {/* Updates List */}
+        <div className="flex flex-col gap-4 overflow-y-auto pr-1 custom-scrollbar">
           {UPDATES.map((update, index) => {
             const isLatest = index === 0;
             return (
-              <div
+              <article
                 key={update.version}
-                className={`p-5 rounded-2xl border transition-all ${
+                className={`p-5 rounded-xl border transition-colors ${
                   isLatest
-                    ? "bg-surface-container-lowest border-emerald-500/40 shadow-md shadow-emerald-500/5 ring-1 ring-emerald-500/20"
-                    : "bg-surface-container/40 border-outline-variant/60 opacity-85 hover:opacity-100"
+                    ? "bg-surface-container-low border-outline-variant/70"
+                    : "bg-surface-container-lowest border-outline-variant/35"
                 }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`text-base font-extrabold px-3 py-1 rounded-xl ${
+                      className={`text-xs font-bold px-2.5 py-1 rounded-lg font-metadata-label ${
                         isLatest
-                          ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm"
-                          : "bg-surface text-on-surface border border-outline-variant"
+                          ? "bg-on-surface text-surface"
+                          : "bg-surface-container text-on-surface border border-outline-variant/40"
                       }`}
                     >
                       {update.version}
                     </span>
                     {isLatest && (
-                      <span className="text-[10px] font-bold tracking-wider uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
-                        Nuevo
+                      <span className="text-[10px] font-bold tracking-wider uppercase bg-surface-container-high text-on-surface border border-outline-variant/50 px-2 py-0.5 rounded-md">
+                        Versión Actual
                       </span>
                     )}
                   </div>
-                  <span className="text-xs font-medium text-on-surface-variant bg-surface px-2.5 py-1 rounded-lg border border-outline-variant/60 flex items-center">
-                    <span className="material-symbols-outlined text-xl animate-pulse mr-2">
-                      calendar_month
+                  <span className="text-xs font-metadata-label text-on-surface-variant bg-surface-container-low px-2.5 py-1 rounded-lg border border-outline-variant/30 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm">
+                      calendar_today
                     </span>
-                    {update.date}
+                    <span>{update.date}</span>
                   </span>
                 </div>
 
-                <h4
-                  className={`text-base font-bold mb-3 ${isLatest ? "text-emerald-400" : "text-primary"}`}
-                >
+                <h3 className="font-display-title text-base sm:text-lg font-bold text-on-surface mb-3">
                   {update.title}
-                </h4>
+                </h3>
 
-                <ul className="space-y-2.5">
+                <div className="space-y-2 border-l-2 border-outline-variant/50 pl-3.5">
                   {update.changes.map((change, i) => (
-                    <li
+                    <p
                       key={i}
-                      className="text-sm text-on-surface-variant font-body-md flex items-start gap-2.5"
+                      className="text-xs sm:text-sm text-on-surface-variant font-body-md leading-relaxed"
                     >
-                      <span className="text-emerald-500 font-bold leading-none mt-0.5">
-                        •
-                      </span>
-                      <span className="leading-relaxed flex-1">
-                        {change.replace(/^▪️\s*/, "")}
-                      </span>
-                    </li>
+                      {change.replace(/^(▪️|>|\s*[-•])\s*/, "")}
+                    </p>
                   ))}
-                </ul>
-              </div>
+                </div>
+              </article>
             );
           })}
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-outline-variant flex items-center justify-between relative z-10 flex-wrap gap-3">
-          <span className="text-xs text-on-surface-variant flex items-center gap-1.5">
-            💡 Mantente al tanto de las próximas funcionalidades del ecosistema
-            BUAP.
+        <div className="pt-3.5 border-t border-outline-variant/30 flex items-center justify-between flex-wrap gap-3">
+          <span className="text-xs text-on-surface-variant font-metadata-label">
+            Comunidad BUAP — Proyecto de Código Abierto
           </span>
           <button
             onClick={onClose}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 text-sm ml-auto"
+            className="bg-on-surface text-surface hover:opacity-90 px-5 py-2.5 rounded-xl font-semibold transition-all active:scale-95 text-xs sm:text-sm ml-auto cursor-pointer"
           >
-            ¡Explorar Mejoras!
+            Entendido
           </button>
         </div>
       </div>

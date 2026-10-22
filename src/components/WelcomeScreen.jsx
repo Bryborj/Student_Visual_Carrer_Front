@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, navigate } from '../hooks/useRouter';
 import NavigationDrawer from './NavigationDrawer';
-import wolfLogo from '../resources/wolf.svg';
+import UpdatesModal, { CURRENT_VERSION } from './UpdatesModal';
 import { IconBulbFilled } from '@tabler/icons-react';
 
-const WelcomeScreen = ({ availablePlansCount = 0 }) => {
+const WelcomeScreen = ({ availablePlansCount = 0, onOpenUpdates }) => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isLocalUpdatesOpen, setIsLocalUpdatesOpen] = useState(false);
+
+    const handleOpenUpdates = () => {
+        if (onOpenUpdates) {
+            onOpenUpdates();
+        } else {
+            setIsLocalUpdatesOpen(true);
+        }
+    };
     const [darkMode, setDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -86,6 +95,7 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                 onOpenForum={() => navigate('/foro')}
                 onOpenProposals={() => navigate('/propuestas')}
                 onOpenAdmin={() => navigate('/admin')}
+                onOpenUpdates={handleOpenUpdates}
                 darkMode={darkMode}
                 onToggleDarkMode={() => setDarkMode(!darkMode)}
                 activeRoute="home"
@@ -345,7 +355,7 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                             </div>
                             <span className="font-headline-md text-xl text-on-surface serif-title font-bold">Comunidad BUAP</span>
                         </div>
-                        <span className="hidden md:block h-5 w-[1px] bg-outline-variant/40"></span>
+                        <span className="hidden md:block h-5 w-px bg-outline-variant/40"></span>
                         <span className="font-metadata-label text-xs text-on-surface-variant tracking-wide">
                             © {new Date().getFullYear()} ZrootSH • Licencia MIT Libre
                         </span>
@@ -358,6 +368,14 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                         <a href="https://github.com/Bryborj/Student_Visual_Carrer_Front" target="_blank" rel="noopener noreferrer" className="hover:text-on-surface transition-colors">GitHub Front</a>
                         <a href="https://github.com/Bryborj/Student_Visual_Carrer_Back" target="_blank" rel="noopener noreferrer" className="hover:text-on-surface transition-colors">GitHub Back</a>
                         <a href="https://github.com/Bryborj" target="_blank" rel="noopener noreferrer" className="hover:text-on-surface transition-colors">Contacto (@Bryborj)</a>
+                        <button
+                            type="button"
+                            onClick={handleOpenUpdates}
+                            className="hover:text-on-surface hover:underline transition-colors font-semibold text-on-surface cursor-pointer"
+                            title="Ver novedades de la versión"
+                        >
+                            {CURRENT_VERSION.startsWith('v') ? CURRENT_VERSION : `v${CURRENT_VERSION}`}
+                        </button>
                     </div>
                 </div>
 
@@ -367,6 +385,11 @@ const WelcomeScreen = ({ availablePlansCount = 0 }) => {
                     </p>
                 </div>
             </footer>
+
+            <UpdatesModal
+                isOpen={isLocalUpdatesOpen}
+                onClose={() => setIsLocalUpdatesOpen(false)}
+            />
         </div>
     );
 };

@@ -147,7 +147,10 @@ function App() {
     if (!isVisualizerRoute) {
         return (
             <>
-                <WelcomeScreen availablePlansCount={availablePlans.length} />
+                <WelcomeScreen
+                    availablePlansCount={availablePlans.length}
+                    onOpenUpdates={() => setIsUpdatesModalOpen(true)}
+                />
                 <UpdatesModal 
                     isOpen={isUpdatesModalOpen} 
                     onClose={handleCloseUpdates} 

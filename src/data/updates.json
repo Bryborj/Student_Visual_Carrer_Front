@@ -1,6 +1,18 @@
 [
   {
-    "version": "v1.3.1",
+    "version": "v2.0.0",
+    "date": "22 de Octubre, 2026",
+    "title": "Ecosistema Unificado 2.0 y Diseño Minimalista Gris Oxford",
+    "changes": [
+      "Nuevo Sistema de Diseño Minimalista Gris Oxford: Interfaz sobria, refinada y de alto contraste con tipografía editorial institucional (Source Serif 4) en todo el portal.",
+      "Unificación de Navegación y Layout: Cabecera institucional común, menú lateral accesible desde cualquier módulo y enlaces directos a los repositorios de GitHub para colaboración abierta.",
+      "Foro de Intercambio Académico y Gobernanza Curricular integrados bajo una misma sesión estudiantil verificada (@buap.mx con PIN).",
+      "Módulo de Propuestas y Editor Visual: Votaciones con indicadores de respaldo comunitario, previsualización comparativa de mallas y acreditación automática a colaboradores.",
+      "Estabilidad y Resiliencia en Base de Datos: Optimización de conexiones remotas mediante TCP Keepalive activo y reciclaje preventivo de sesiones."
+    ]
+  },
+  {
+    "version": "v1.3.2",
     "date": "10 de Julio, 2026",
     "title": "Corrección de Errores",
     "changes": [

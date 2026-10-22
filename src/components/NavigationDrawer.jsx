@@ -393,7 +393,17 @@ const NavigationDrawer = ({
 
                     <div className="flex items-center justify-between text-[11px] text-on-surface-variant/80 px-2">
                         <span>ZrootSH • BUAP</span>
-                        <span className="font-metadata-label">v{CURRENT_VERSION}</span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                if (onOpenUpdates) onOpenUpdates();
+                            }}
+                            className="font-metadata-label px-2 py-0.5 rounded-md bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/40 transition-colors cursor-pointer"
+                            title="Ver novedades de la versión"
+                        >
+                            {CURRENT_VERSION.startsWith('v') ? CURRENT_VERSION : `v${CURRENT_VERSION}`}
+                        </button>
                     </div>
                 </div>
             </div>
