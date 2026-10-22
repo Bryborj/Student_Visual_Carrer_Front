@@ -159,6 +159,9 @@ const NavigationDrawer = ({
                             <button
                                 onClick={() => {
                                     onClose();
+                                    if (activeRoute !== 'visualizer') {
+                                        navigate('/visualizador');
+                                    }
                                 }}
                                 className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                                     activeRoute === 'visualizer'
@@ -226,9 +229,16 @@ const NavigationDrawer = ({
                             <button
                                 onClick={() => {
                                     onClose();
-                                    if (onOpenForum) onOpenForum();
+                                    if (activeRoute !== 'forum') {
+                                        if (onOpenForum) onOpenForum();
+                                        else navigate('/foro');
+                                    }
                                 }}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors group"
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group ${
+                                    activeRoute === 'forum'
+                                        ? 'bg-primary/10 text-primary font-semibold'
+                                        : 'text-on-surface hover:bg-surface-container-high'
+                                }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <span className="material-symbols-outlined text-lg text-purple-500">forum</span>

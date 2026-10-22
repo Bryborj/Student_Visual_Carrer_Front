@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { IconArrowBarRight } from "@tabler/icons-react";
 import { navigate } from "../hooks/useRouter";
 import NavigationDrawer from "./NavigationDrawer";
 
 const Layout = ({
   children,
-  stats,
+  stats = null,
   onReset,
   title = "Plan de Estudios",
   logo_url = "",
   contributor = null,
   headerControls = null,
+  rightControls = null,
+  activeRoute = "visualizer",
   onOpenPlanSelector,
   onOpenUpdates,
   onOpenForum,
@@ -60,7 +63,7 @@ const Layout = ({
       <header className="bg-background border-b border-outline-variant sticky top-0 z-40 print:hidden transition-colors duration-300 shadow-xs">
         <div className="flex flex-col sm:flex-row justify-between items-center w-full px-4 md:px-grid-margin py-3.5 max-w-container-max-width mx-auto gap-4">
           <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container p-1 shrink-0 border border-outline-variant/30">
+            <div className="w-11 h-11 flex items-center justify-center rounded-xl p-1">
               {logo_url ? (
                 <img
                   src={logo_url}
@@ -68,9 +71,7 @@ const Layout = ({
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <span className="material-symbols-outlined text-primary text-2xl">
-                  school
-                </span>
+                <img src="wolf.svg" alt="Logo" className="dark:invert" />
               )}
             </div>
             <div className="flex flex-col items-start min-w-0">
@@ -95,47 +96,58 @@ const Layout = ({
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-            {/* Indicador de Créditos Compacto */}
-            <div className="bg-surface-container px-3 py-1.5 rounded-full flex items-center gap-2 border border-outline-variant/40">
-              <span className="text-metadata-label font-metadata-label text-on-surface-variant">
-                {Math.round(stats.passedCredits)} / {stats.totalCredits}{" "}
-                <span className="hidden md:inline">Créditos</span>
-              </span>
-              <div className="w-14 sm:w-20 h-2 bg-surface-variant rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${stats.percentage}%` }}
-                ></div>
+            {/* Indicador de Créditos Compacto (Solo si stats está disponible) */}
+            {stats && stats.totalCredits !== undefined && (
+              <div className="bg-surface-container px-3 py-1.5 rounded-full flex items-center gap-2 border border-outline-variant/40">
+                <span className="text-metadata-label font-metadata-label text-on-surface-variant">
+                  {Math.round(stats.passedCredits)} / {stats.totalCredits}{" "}
+                  <span className="hidden md:inline">Créditos</span>
+                </span>
+                <div className="w-14 sm:w-20 h-2 bg-surface-variant rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${stats.percentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-metadata-label font-metadata-label font-bold text-primary">
+                  {Math.round(stats.percentage)}%
+                </span>
               </div>
-              <span className="text-metadata-label font-metadata-label font-bold text-primary">
-                {Math.round(stats.percentage)}%
-              </span>
-            </div>
+            )}
+
+            {/* Controles personalizados por vista (ej. sesión en el Foro) */}
+            {rightControls}
 
             {/* Botones Rápidos y Menú Hamburguesa */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <button
-                onClick={() => navigate("/propuestas?tab=editor")}
-                aria-label="Proponer cambios o nuevo plan"
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all active:scale-95"
-                title="Abrir Editor Visual para proponer cambios o agregar un plan"
-              >
-                <span className="material-symbols-outlined text-lg">
-                  edit_calendar
-                </span>
-                <span className="text-xs font-semibold hidden md:inline">
-                  Proponer / Editar Plan
-                </span>
-              </button>
+              {activeRoute === "visualizer" && (
+                <>
+                  <button
+                    onClick={() => navigate("/propuestas?tab=editor")}
+                    aria-label="Proponer cambios o nuevo plan"
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all active:scale-95"
+                    title="Abrir Editor Visual para proponer cambios o agregar un plan"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      edit_calendar
+                    </span>
+                    <span className="text-xs font-semibold hidden md:inline">
+                      Proponer / Editar Plan
+                    </span>
+                  </button>
 
-              <button
-                onClick={handlePrint}
-                aria-label="Imprimir mapa curricular"
-                className="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
-                title="Imprimir o exportar PDF"
-              >
-                <span className="material-symbols-outlined text-xl">print</span>
-              </button>
+                  <button
+                    onClick={handlePrint}
+                    aria-label="Imprimir mapa curricular"
+                    className="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                    title="Imprimir o exportar PDF"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      print
+                    </span>
+                  </button>
+                </>
+              )}
 
               <button
                 onClick={() => setDarkMode(!darkMode)}
@@ -145,7 +157,7 @@ const Layout = ({
                   darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"
                 }
               >
-                <span className="material-symbols-outlined text-xl text-amber-500">
+                <span className="material-symbols-outlined text-xl text-black dark:text-amber-500">
                   {darkMode ? "light_mode" : "dark_mode"}
                 </span>
               </button>
@@ -174,58 +186,60 @@ const Layout = ({
       <NavigationDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        currentCareer={title}
-        stats={stats}
-        onGoHome={onGoHome}
+        currentCareer={activeRoute === "visualizer" ? title : ""}
+        stats={stats || undefined}
+        onGoHome={onGoHome || (() => navigate("/"))}
         onOpenPlanSelector={onOpenPlanSelector}
-        onOpenForum={onOpenForum}
-        onOpenProposals={onOpenProposals}
+        onOpenForum={onOpenForum || (() => navigate("/foro"))}
+        onOpenProposals={onOpenProposals || (() => navigate("/propuestas"))}
         onOpenAdmin={onOpenAdmin || (() => navigate("/admin"))}
         onOpenUpdates={onOpenUpdates}
         onReset={onReset}
-        onPrint={handlePrint}
+        onPrint={activeRoute === "visualizer" ? handlePrint : undefined}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
-        activeRoute="visualizer"
+        activeRoute={activeRoute}
       />
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto relative print:overflow-visible">
-        {/* Print Header */}
-        <div className="hidden print:flex justify-between items-end border-b-2 border-on-surface pb-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded">
-              <img
-                src={logo_url}
-                alt="Logo"
-                className="w-full h-full object-contain"
-              />
+        {/* Print Header (Solo cuando hay stats en el visualizador) */}
+        {stats && stats.totalCredits !== undefined && (
+          <div className="hidden print:flex justify-between items-end border-b-2 border-on-surface pb-4 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 flex items-center justify-center rounded">
+                <img
+                  src={logo_url}
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">
+                  {title}
+                </h1>
+                {headerControls}
+              </div>
             </div>
-            <div>
-              <h1 className="font-display-title text-2xl font-bold text-on-surface leading-tight">
-                {title}
-              </h1>
-              {headerControls}
+            <div className="text-right flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-metadata-label text-metadata-label uppercase">
+                  Créditos Totales: {Math.round(stats.passedCredits)} /{" "}
+                  {stats.totalCredits}
+                </span>
+              </div>
+              <div className="w-48 h-2 border border-on-surface bg-surface-variant rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-on-surface"
+                  style={{ width: `${stats.percentage}%` }}
+                ></div>
+              </div>
+              <p className="font-metadata-label text-metadata-label text-on-surface-variant">
+                Avance de Carrera: {Math.round(stats.percentage)}%
+              </p>
             </div>
           </div>
-          <div className="text-right flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-metadata-label text-metadata-label uppercase">
-                Créditos Totales: {Math.round(stats.passedCredits)} /{" "}
-                {stats.totalCredits}
-              </span>
-            </div>
-            <div className="w-48 h-2 border border-on-surface bg-surface-variant rounded-full overflow-hidden">
-              <div
-                className="h-full bg-on-surface"
-                style={{ width: `${stats.percentage}%` }}
-              ></div>
-            </div>
-            <p className="font-metadata-label text-metadata-label text-on-surface-variant">
-              Avance de Carrera: {Math.round(stats.percentage)}%
-            </p>
-          </div>
-        </div>
+        )}
 
         {children}
       </main>

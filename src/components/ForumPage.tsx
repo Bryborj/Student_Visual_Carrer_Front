@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { ForumPost, ForumUser } from '../types';
-import { Link } from '../hooks/useRouter';
+import { navigate } from '../hooks/useRouter';
+import Layout from './Layout';
 
 interface ForumPageProps {
   currentCareer?: string;
 }
 
 const CATEGORIES = [
-  { id: 'Todos', label: 'Todos', color: 'bg-primary text-white', dot: 'bg-primary', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300' },
-  { id: '💬 General', label: 'General', color: 'bg-blue-500 text-white', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300' },
-  { id: '👨‍🏫 Materias & Profesores', label: 'Materias & Profesores', color: 'bg-emerald-500 text-white', dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' },
-  { id: '💡 Dudas Académicas', label: 'Dudas Académicas', color: 'bg-amber-500 text-white', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300' },
-  { id: '🚀 Proyectos & Colaboración', label: 'Proyectos & Colaboración', color: 'bg-purple-500 text-white', dot: 'bg-purple-500', badge: 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300' }
+  { id: 'Todos', label: 'Todos', dot: 'bg-on-surface', badge: 'bg-surface-container-high text-on-surface border border-outline-variant/40' },
+  { id: '💬 General', label: 'General', dot: 'bg-outline', badge: 'bg-surface-container-high text-on-surface-variant border border-outline-variant/40' },
+  { id: '👨‍🏫 Materias & Profesores', label: 'Materias & Profesores', dot: 'bg-emerald-500', badge: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' },
+  { id: '💡 Dudas Académicas', label: 'Dudas Académicas', dot: 'bg-amber-500', badge: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30' },
+  { id: '🚀 Proyectos & Colaboración', label: 'Proyectos & Colaboración', dot: 'bg-purple-500', badge: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30' }
 ];
 
 const MOCK_POSTS: ForumPost[] = [];
@@ -23,24 +24,6 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recientes' | 'populares' | 'comentados'>('recientes');
   const [sidebarNav, setSidebarNav] = useState<'discusiones' | 'populares' | 'recientes'>('discusiones');
-  
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' ||
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
 
   // User Session State
   const [forumUser, setForumUser] = useState<ForumUser | null>(() => {
@@ -413,50 +396,96 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
 
   const getBadgeClass = (categoryName: string) => {
     const found = CATEGORIES.find(c => c.id === categoryName || c.label === categoryName);
-    return found?.badge || 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300';
+    return found?.badge || 'bg-surface-container-high text-on-surface-variant border border-outline-variant/40';
   };
 
+  const authControls = forumUser ? (
+    <div className="flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/40 text-xs sm:text-sm">
+      <span className="font-bold text-on-surface">@{forumUser.username}</span>
+      <button
+        onClick={handleLogout}
+        title="Cerrar sesión"
+        className="text-on-surface-variant hover:text-error transition-colors flex items-center ml-1 cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[18px]">logout</span>
+      </button>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => { setShowAuthView(true); setAuthTab('login'); }}
+        className="px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/40 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+      >
+        Iniciar Sesión
+      </button>
+      <button
+        onClick={() => { setShowAuthView(true); setAuthTab('register'); }}
+        className="hidden sm:inline-flex px-3.5 py-1.5 rounded-xl bg-on-surface text-surface hover:opacity-90 text-xs font-semibold transition-all active:scale-95 shadow-xs cursor-pointer"
+      >
+        Registrarse
+      </button>
+    </div>
+  );
+
+  const careerBadgeControl = (
+    <div className="mt-1 flex items-center gap-2 flex-wrap">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-metadata-label bg-surface-container text-on-surface-variant border border-outline-variant/40">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span>Comunidad: <strong className="text-on-surface">{currentCareer}</strong></span>
+      </span>
+    </div>
+  );
+
   return (
-    <div className="bg-[#f8f6f6] dark:bg-background text-gray-800 dark:text-on-surface min-h-screen flex flex-col justify-between relative transition-colors duration-300 antialiased font-body-md">
+    <Layout
+      title="Foro de Intercambio Académico"
+      activeRoute="forum"
+      headerControls={careerBadgeControl}
+      rightControls={authControls}
+      onGoHome={() => navigate('/')}
+      onOpenForum={() => navigate('/foro')}
+      onOpenProposals={() => navigate('/propuestas')}
+      onOpenAdmin={() => navigate('/admin')}
+    >
       {/* Auth Overlay Modal */}
       {showAuthView && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
-          <div className="bg-white dark:bg-surface-container-lowest border border-gray-200 dark:border-outline-variant rounded-2xl p-6 max-w-md w-full shadow-2xl relative my-auto">
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
+          <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-6 max-w-md w-full shadow-2xl relative my-auto">
             <button
               onClick={() => { setShowAuthView(false); setAuthError(''); }}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-surface-container text-gray-500 dark:text-on-surface-variant transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
 
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#ec5b13] to-orange-500 mx-auto flex items-center justify-center text-white font-bold text-2xl shadow-lg mb-3">
-                🔐
+              <div className="w-12 h-12 rounded-2xl bg-surface-container-high border border-outline-variant/40 mx-auto flex items-center justify-center text-on-surface shadow-xs mb-3 p-2">
+                <img src="/wolf.svg" alt="Lobo BUAP" className="w-full h-full object-contain dark:invert" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-on-surface">Acceso al Foro BUAP</h3>
-              <p className="text-xs text-gray-600 dark:text-on-surface-variant mt-1">
-                Tu correo no se guardará. Solo almacenamos un hash criptográfico anónimo para verificar tu pertenencia a la BUAP.
+              <h3 className="serif-title text-xl font-bold text-on-surface">Acceso al Foro BUAP</h3>
+              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                Tu correo no se guardará. Solo almacenamos un hash criptográfico anónimo (SHA-256) para verificar tu pertenencia a la BUAP.
               </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-outline-variant mb-5">
+            <div className="flex border-b border-outline-variant/40 mb-5">
               <button
                 onClick={() => { setAuthTab('login'); setAuthError(''); setAuthSuccess(''); }}
-                className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-all ${
+                className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
                   authTab === 'login'
-                    ? 'border-[#ec5b13] text-[#ec5b13]'
-                    : 'border-transparent text-gray-500 dark:text-on-surface-variant hover:text-gray-800 dark:hover:text-on-surface'
+                    ? 'border-on-surface text-on-surface'
+                    : 'border-transparent text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 Iniciar Sesión
               </button>
               <button
                 onClick={() => { setAuthTab('register'); setAuthError(''); setAuthSuccess(''); }}
-                className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-all ${
+                className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
                   authTab === 'register'
-                    ? 'border-[#ec5b13] text-[#ec5b13]'
-                    : 'border-transparent text-gray-500 dark:text-on-surface-variant hover:text-gray-800 dark:hover:text-on-surface'
+                    ? 'border-on-surface text-on-surface'
+                    : 'border-transparent text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 Regístrate gratis
@@ -464,7 +493,7 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
             </div>
 
             {authError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 text-xs flex items-start gap-2">
+              <div className="mb-4 p-3 rounded-xl bg-error/10 border border-error/30 text-error text-xs flex items-start gap-2">
                 <span className="material-symbols-outlined text-sm shrink-0">error</span>
                 <span>{authError}</span>
               </div>
@@ -495,31 +524,31 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
             {authTab === 'login' ? (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-on-surface-variant mb-1">CORREO INSTITUCIONAL O USUARIO</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">Correo Institucional o Usuario</label>
                   <input
                     type="text"
                     required
                     placeholder="Ej: lobito123 o estudiante@alumno.buap.mx"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-[#ec5b13]"
+                    className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 text-sm text-on-surface focus:outline-none focus:border-outline"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-on-surface-variant mb-1">CONTRASEÑA</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">Contraseña</label>
                   <input
                     type="password"
                     required
                     placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-[#ec5b13]"
+                    className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 text-sm text-on-surface focus:outline-none focus:border-outline"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-3 rounded-xl bg-[#ec5b13] hover:bg-orange-600 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-on-surface text-surface font-bold text-sm shadow-md hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {authLoading ? (
                     <>
@@ -534,7 +563,7 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
             ) : (
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-on-surface-variant mb-1">1. CORREO INSTITUCIONAL BUAP</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">1. Correo Institucional BUAP</label>
                   <div className="flex gap-2">
                     <input
                       type="email"
@@ -543,14 +572,14 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                       placeholder="ejemplo@alumno.buap.mx"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      className="flex-1 bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-[#ec5b13] disabled:opacity-60"
+                      className="flex-1 bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 text-sm text-on-surface focus:outline-none focus:border-outline disabled:opacity-60"
                     />
                     {!pinSent && (
                       <button
                         type="button"
                         onClick={handleSendPin}
                         disabled={authLoading}
-                        className="px-3 bg-[#ec5b13] hover:bg-orange-600 text-white font-semibold text-xs rounded-xl whitespace-nowrap transition-colors disabled:opacity-50"
+                        className="px-3.5 bg-on-surface text-surface hover:opacity-90 font-semibold text-xs rounded-xl whitespace-nowrap transition-all disabled:opacity-50 cursor-pointer"
                       >
                         {authLoading ? '...' : 'Enviar PIN'}
                       </button>
@@ -559,9 +588,9 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                 </div>
 
                 {pinSent && (
-                  <div className="space-y-4 animate-fadeIn border-t border-gray-200 dark:border-outline-variant/60 pt-4">
+                  <div className="space-y-4 animate-fadeIn border-t border-outline-variant/40 pt-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-on-surface-variant mb-1">2. PIN DE VERIFICACIÓN (6 DÍGITOS)</label>
+                      <label className="block text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">2. PIN de Verificación (6 dígitos)</label>
                       <input
                         type="text"
                         required
@@ -569,35 +598,35 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                         placeholder="123456"
                         value={regPin}
                         onChange={(e) => setRegPin(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl p-3 text-sm tracking-widest font-bold text-center focus:outline-none focus:border-[#ec5b13]"
+                        className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 text-sm tracking-widest font-bold text-center text-on-surface focus:outline-none focus:border-outline"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-on-surface-variant mb-1">3. NOMBRE DE USUARIO (PÚBLICO)</label>
+                      <label className="block text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">3. Nombre de Usuario (Público)</label>
                       <input
                         type="text"
                         required
                         placeholder="Ej: lobito_computacion"
                         value={regUsername}
                         onChange={(e) => setRegUsername(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-[#ec5b13]"
+                        className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 text-sm text-on-surface focus:outline-none focus:border-outline"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-on-surface-variant mb-1">4. CONTRASEÑA</label>
+                      <label className="block text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">4. Contraseña</label>
                       <input
                         type="password"
                         required
                         placeholder="Mínimo 6 caracteres"
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl p-3 text-sm focus:outline-none focus:border-[#ec5b13]"
+                        className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 text-sm text-on-surface focus:outline-none focus:border-outline"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={authLoading}
-                      className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-xl bg-on-surface text-surface font-bold text-sm shadow-md hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {authLoading ? (
                         <>
@@ -616,131 +645,98 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
         </div>
       )}
 
-      <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
-        {/* Navigation adapted from Stitch Sinergia UI */}
-        <header className="sticky top-0 z-40 flex items-center justify-between whitespace-nowrap border-b border-gray-200 dark:border-outline-variant bg-white/95 dark:bg-surface-container-lowest/95 backdrop-blur-md px-6 sm:px-10 py-4 shadow-sm transition-colors duration-300">
-          <div className="flex items-center gap-4 text-gray-900 dark:text-on-surface">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="size-8 rounded-lg bg-[#ec5b13]/15 text-[#ec5b13] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <span className="material-symbols-outlined text-[22px]">forum</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold leading-tight tracking-[-0.015em] text-gray-900 dark:text-on-surface">Comunidad BUAP</h2>
-                <p className="text-[10px] text-gray-500 dark:text-on-surface-variant uppercase font-semibold tracking-wider -mt-0.5">Foro Académico</p>
-              </div>
-            </Link>
-          </div>
+      {/* Main Forum Content Container */}
+      <div className="relative overflow-hidden">
+        <div className="bg-subtle-glow top-0 -left-24"></div>
+        <div className="bg-subtle-glow bottom-10 -right-24"></div>
 
-          <div className="flex flex-1 justify-end items-center gap-6 sm:gap-8">
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-gray-600 dark:text-on-surface-variant hover:text-[#ec5b13] dark:hover:text-[#ec5b13] transition-colors text-sm font-medium leading-normal">Inicio</Link>
-              <Link to="/visualizador" className="text-gray-600 dark:text-on-surface-variant hover:text-[#ec5b13] dark:hover:text-[#ec5b13] transition-colors text-sm font-medium leading-normal">Visualizador</Link>
-              <Link to="/foro" className="text-[#ec5b13] text-sm font-medium leading-normal border-b-2 border-[#ec5b13] pb-1">Foro</Link>
+        <div className="w-full max-w-container-max-width mx-auto px-4 md:px-grid-margin py-8 sm:py-10 relative z-10">
+          {/* Editorial Hero Banner */}
+          <div className="mb-10 pb-8 border-b border-outline-variant/30 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-metadata-label bg-surface-container border border-outline-variant/40 text-on-surface-variant mb-3">
+                <span className="material-symbols-outlined text-sm text-emerald-500">verified_user</span>
+                <span>Identidad Institucional Protegida con SHA-256</span>
+              </div>
+              <h2 className="serif-title text-3xl sm:text-4xl font-bold text-on-surface tracking-tight">
+                Diálogo & Comunidad Universitaria
+              </h2>
+              <p className="text-sm sm:text-base text-on-surface-variant max-w-2xl mt-2 leading-relaxed">
+                Espacio abierto para compartir reseñas constructivas sobre materias, experiencias docentes, recursos académicos y proyectos estudiantiles en la BUAP.
+              </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                aria-label="Alternar Modo Oscuro"
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-surface-container hover:dark:bg-surface-container-high transition-colors text-gray-700 dark:text-on-surface-variant"
-                title={darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
-              >
-                <span className="material-symbols-outlined text-[20px] block">
-                  {darkMode ? 'light_mode' : 'dark_mode'}
-                </span>
-              </button>
-
-              {forumUser ? (
-                <div className="flex items-center gap-2 bg-gray-100 dark:bg-surface-container px-3.5 py-1.5 rounded-lg border border-gray-200 dark:border-outline-variant text-sm">
-                  <span className="font-bold text-[#ec5b13]">@{forumUser.username}</span>
-                  <button
-                    onClick={handleLogout}
-                    title="Cerrar sesión"
-                    className="text-gray-500 hover:text-rose-500 transition-colors flex items-center ml-1"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">logout</span>
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => { setShowAuthView(true); setAuthTab('login'); }}
-                    className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-surface-container hover:dark:bg-surface-container-high text-gray-800 dark:text-on-surface text-sm font-bold leading-normal transition-colors"
-                  >
-                    <span className="truncate">Iniciar Sesión</span>
-                  </button>
-                  <button
-                    onClick={() => { setShowAuthView(true); setAuthTab('register'); }}
-                    className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#ec5b13] hover:bg-orange-600 text-white text-sm font-bold leading-normal transition-colors shadow-md"
-                  >
-                    <span className="truncate">Registrarse</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8">
-          {/* Hero Section from Sinergia UI */}
-          <div className="mb-10 text-center">
-            <h1 className="font-serif text-4xl sm:text-5xl font-bold text-gray-900 dark:text-on-surface mb-3 tracking-tight">Foro de Intercambio Académico</h1>
-            <p className="text-base sm:text-xl text-gray-600 dark:text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Discute herramientas, análisis y metodologías con la comunidad estudiantil e investigadores de la BUAP.</p>
+            {!forumUser && (
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => { setShowAuthView(true); setAuthTab('register'); }}
+                  className="px-4 py-2.5 rounded-xl bg-on-surface text-surface font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all hover:opacity-90 active:scale-95 shadow-xs cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">person_add</span>
+                  <span>Unirse con Correo BUAP</span>
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Main Content Layout */}
+          {/* Main Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Navigation Links */}
-              <nav className="bg-white dark:bg-surface-container-lowest rounded-xl shadow-sm border border-gray-100 dark:border-outline-variant p-4">
-                <ul className="space-y-2">
+            <aside className="lg:col-span-1 space-y-6">
+              {/* Navigation Views */}
+              <nav className="academic-card rounded-2xl p-4 shadow-xs">
+                <span className="text-[11px] font-metadata-label text-on-surface-variant uppercase tracking-wider px-2.5 mb-2.5 block">
+                  Explorar Feed
+                </span>
+                <ul className="space-y-1">
                   <li>
                     <button
                       onClick={() => { setSidebarNav('discusiones'); setSelectedCategory('Todos'); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm cursor-pointer ${
                         sidebarNav === 'discusiones' && selectedCategory === 'Todos'
-                          ? 'bg-orange-50 dark:bg-[#ec5b13]/15 text-[#ec5b13]'
-                          : 'text-gray-600 dark:text-on-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container hover:text-gray-900 dark:hover:text-on-surface'
+                          ? 'bg-surface-container-high text-on-surface font-semibold border border-outline-variant/40'
+                          : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">forum</span>
-                      <span>Discusiones</span>
+                      <span className="material-symbols-outlined text-[19px]">forum</span>
+                      <span>Todas las Discusiones</span>
                     </button>
                   </li>
                   <li>
                     <button
                       onClick={() => { setSidebarNav('populares'); setSortBy('populares'); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm cursor-pointer ${
                         sidebarNav === 'populares'
-                          ? 'bg-orange-50 dark:bg-[#ec5b13]/15 text-[#ec5b13]'
-                          : 'text-gray-600 dark:text-on-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container hover:text-gray-900 dark:hover:text-on-surface'
+                          ? 'bg-surface-container-high text-on-surface font-semibold border border-outline-variant/40'
+                          : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">local_fire_department</span>
-                      <span>Populares</span>
+                      <span className="material-symbols-outlined text-[19px] text-amber-500">local_fire_department</span>
+                      <span>Más Populares</span>
                     </button>
                   </li>
                   <li>
                     <button
                       onClick={() => { setSidebarNav('recientes'); setSortBy('recientes'); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm cursor-pointer ${
                         sidebarNav === 'recientes'
-                          ? 'bg-orange-50 dark:bg-[#ec5b13]/15 text-[#ec5b13]'
-                          : 'text-gray-600 dark:text-on-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container hover:text-gray-900 dark:hover:text-on-surface'
+                          ? 'bg-surface-container-high text-on-surface font-semibold border border-outline-variant/40'
+                          : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">history</span>
-                      <span>Recientes</span>
+                      <span className="material-symbols-outlined text-[19px]">schedule</span>
+                      <span>Más Recientes</span>
                     </button>
                   </li>
                 </ul>
               </nav>
 
               {/* Categories */}
-              <div className="bg-white dark:bg-surface-container-lowest rounded-xl shadow-sm border border-gray-100 dark:border-outline-variant p-5">
-                <h3 className="font-bold text-gray-900 dark:text-on-surface mb-4 uppercase tracking-wider text-xs">Categorías</h3>
-                <ul className="space-y-3">
+              <div className="academic-card rounded-2xl p-5 shadow-xs">
+                <h3 className="text-[11px] font-metadata-label text-on-surface-variant uppercase tracking-wider mb-3.5">
+                  Categorías Temáticas
+                </h3>
+                <ul className="space-y-1.5">
                   {CATEGORIES.map(cat => {
                     const active = selectedCategory === cat.id;
                     const count = getCategoryCount(cat.id);
@@ -748,24 +744,22 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                       <li key={cat.id}>
                         <button
                           onClick={() => { setSelectedCategory(cat.id); setSidebarNav('discusiones'); }}
-                          className={`w-full flex items-center justify-between group py-1.5 px-2 rounded-lg transition-all ${
-                            active ? 'bg-orange-50 dark:bg-[#ec5b13]/15 font-semibold text-[#ec5b13]' : ''
+                          className={`w-full flex items-center justify-between group py-2 px-2.5 rounded-xl transition-all cursor-pointer ${
+                            active
+                              ? 'bg-surface-container-high text-on-surface font-semibold border border-outline-variant/40'
+                              : 'hover:bg-surface-container text-on-surface-variant hover:text-on-surface'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className={`w-3 h-3 rounded-full ${cat.dot}`}></span>
-                            <span className={`text-sm transition-colors ${
-                              active
-                                ? 'text-[#ec5b13] font-bold'
-                                : 'text-gray-600 dark:text-on-surface-variant group-hover:text-gray-900 dark:group-hover:text-on-surface'
-                            }`}>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${cat.dot}`}></span>
+                            <span className="text-xs sm:text-sm truncate">
                               {cat.label}
                             </span>
                           </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          <span className={`text-[11px] font-metadata-label px-2 py-0.5 rounded-full shrink-0 ${
                             active
-                              ? 'bg-[#ec5b13] text-white'
-                              : 'text-gray-500 dark:text-on-surface-variant bg-gray-100 dark:bg-surface-container'
+                              ? 'bg-on-surface text-surface font-bold'
+                              : 'text-on-surface-variant bg-surface-container'
                           }`}>
                             {count}
                           </span>
@@ -775,24 +769,42 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                   })}
                 </ul>
               </div>
-            </div>
+
+              {/* Privacy & Coexistence Box */}
+              <div className="academic-card rounded-2xl p-5 shadow-xs space-y-2">
+                <div className="flex items-center gap-2 text-on-surface font-semibold text-xs">
+                  <span className="material-symbols-outlined text-base text-emerald-500">lock</span>
+                  <span>Privacidad Criptográfica</span>
+                </div>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Tu correo institucional se transforma mediante un hash irreversible <span className="font-metadata-label text-on-surface">SHA-256</span>. Participa con libertad y respeto académico.
+                </p>
+              </div>
+            </aside>
 
             {/* Main Feed */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Post Composer adapted from Sinergia UI */}
-              <form onSubmit={handleCreatePost} className="bg-white dark:bg-surface-container-lowest rounded-2xl shadow-sm border border-gray-200 dark:border-outline-variant overflow-hidden focus-within:ring-2 focus-within:ring-[#ec5b13]/20 focus-within:border-[#ec5b13] transition-all duration-200">
-                <div className="flex items-start p-4 gap-4">
-                  <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-tr from-[#ec5b13] to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                    {forumUser ? forumUser.username.slice(0, 2).toUpperCase() : '🐺'}
+              {/* Post Composer */}
+              <form
+                onSubmit={handleCreatePost}
+                className="academic-card rounded-2xl shadow-xs overflow-hidden focus-within:border-outline transition-all duration-200"
+              >
+                <div className="flex items-start p-4 sm:p-5 gap-4">
+                  <div className="w-10 h-10 rounded-xl shrink-0 bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface font-bold text-xs shadow-xs">
+                    {forumUser ? (
+                      forumUser.username.slice(0, 2).toUpperCase()
+                    ) : (
+                      <img src="/wolf.svg" alt="Lobo BUAP" className="w-6 h-6 object-contain dark:invert" />
+                    )}
                   </div>
                   <div className="flex-1 space-y-2.5">
                     {forumUser && (
                       <input
                         type="text"
-                        placeholder="Título del tema (ej. ¿Qué profesor recomiendan para BD?)..."
+                        placeholder="Título del tema (ej. ¿Qué profesor recomiendan para Bases de Datos?)..."
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
-                        className="w-full bg-transparent border-b border-gray-100 dark:border-outline-variant/60 focus:border-[#ec5b13] pb-2 text-gray-900 dark:text-on-surface placeholder-gray-400 dark:placeholder-on-surface-variant/60 text-base font-semibold focus:outline-none"
+                        className="w-full bg-transparent border-b border-outline-variant/40 focus:border-outline pb-2 text-on-surface placeholder-on-surface-variant/60 text-base font-semibold focus:outline-none"
                       />
                     )}
                     <textarea
@@ -800,20 +812,20 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                       onClick={() => { if (!forumUser) setShowAuthView(true); }}
                       value={newContent}
                       onChange={(e) => setNewContent(e.target.value)}
-                      className="w-full bg-transparent border-none focus:ring-0 resize-none text-gray-800 dark:text-on-surface placeholder-gray-400 dark:placeholder-on-surface-variant/60 p-0 text-sm sm:text-base min-h-[56px] focus:outline-none"
-                      placeholder={forumUser ? "Inicia una nueva discusión... comparte análisis, dudas o aportes" : "Haz clic aquí e inicia sesión para iniciar una nueva discusión..."}
+                      className="w-full bg-transparent border-none focus:ring-0 resize-none text-on-surface placeholder-on-surface-variant/60 p-0 text-sm sm:text-base min-h-[56px] focus:outline-none"
+                      placeholder={forumUser ? "Inicia una nueva discusión... comparte análisis, dudas o aportes con la comunidad" : "Haz clic aquí e inicia sesión con tu cuenta BUAP para publicar un tema..."}
                     ></textarea>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-surface-container border-t border-gray-100 dark:border-outline-variant p-3 flex flex-wrap gap-3 justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-on-surface-variant hidden sm:inline">Categoría:</span>
+                <div className="bg-surface-container-low border-t border-outline-variant/30 px-4 py-3 flex flex-wrap gap-3 justify-between items-center">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-metadata-label text-on-surface-variant hidden sm:inline">Categoría:</span>
                     <select
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value)}
                       disabled={!forumUser}
-                      className="text-xs bg-white dark:bg-surface-container-lowest border border-gray-300 dark:border-outline-variant rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-on-surface font-medium focus:ring-[#ec5b13] focus:border-[#ec5b13] focus:outline-none disabled:opacity-50"
+                      className="text-xs bg-surface-container border border-outline-variant/40 rounded-xl px-3 py-1.5 text-on-surface font-medium focus:border-outline focus:outline-none disabled:opacity-50"
                     >
                       {CATEGORIES.filter(c => c.id !== 'Todos').map(c => (
                         <option key={c.id} value={c.id}>{c.label}</option>
@@ -823,19 +835,21 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                   <button
                     type="submit"
                     onClick={(e) => { if (!forumUser) { e.preventDefault(); setShowAuthView(true); } }}
-                    className="bg-[#ec5b13] hover:bg-orange-600 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm ml-auto"
+                    className="bg-on-surface text-surface hover:opacity-90 px-5 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all active:scale-95 shadow-xs ml-auto cursor-pointer"
                   >
-                    Publicar
+                    Publicar Tema
                   </button>
                 </div>
               </form>
 
               {/* Filter/Sort Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 dark:border-outline-variant pb-3 gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-outline-variant/30 pb-3.5 gap-3">
                 <div className="flex items-center gap-3">
-                  <h2 className="font-bold text-gray-800 dark:text-on-surface text-lg">Últimas Discusiones</h2>
+                  <h3 className="serif-title font-bold text-on-surface text-xl">
+                    Últimas Discusiones
+                  </h3>
                   {selectedCategory !== 'Todos' && (
-                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-200 dark:bg-surface-container text-gray-700 dark:text-on-surface-variant">
+                    <span className="text-xs font-metadata-label px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface border border-outline-variant/40">
                       {CATEGORIES.find(c => c.id === selectedCategory)?.label || selectedCategory}
                     </span>
                   )}
@@ -843,22 +857,22 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
 
                 <div className="flex items-center gap-3 self-end sm:self-auto">
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">search</span>
+                    <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[17px]">search</span>
                     <input
                       type="text"
-                      placeholder="Buscar en el foro..."
+                      placeholder="Buscar tema o autor..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-white dark:bg-surface-container-lowest border border-gray-300 dark:border-outline-variant rounded-md pl-8 pr-3 py-1 text-xs text-gray-700 dark:text-on-surface focus:outline-none focus:border-[#ec5b13] w-40 sm:w-48"
+                      className="bg-surface-container-low border border-outline-variant/40 rounded-xl pl-8 pr-3 py-1.5 text-xs text-on-surface placeholder-on-surface-variant/60 focus:outline-none focus:border-outline w-40 sm:w-52"
                     />
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-gray-500 dark:text-on-surface-variant whitespace-nowrap">Ordenar por:</span>
+                    <span className="text-xs font-metadata-label text-on-surface-variant whitespace-nowrap hidden sm:inline">Orden:</span>
                     <select
                       value={sortBy}
                       onChange={(e) => { setSortBy(e.target.value as any); setSidebarNav('discusiones'); }}
-                      className="text-xs border border-gray-300 dark:border-outline-variant rounded-md focus:ring-[#ec5b13] focus:border-[#ec5b13] text-gray-700 dark:text-on-surface py-1 pl-2 pr-6 bg-white dark:bg-surface-container"
+                      className="text-xs border border-outline-variant/40 rounded-xl focus:border-outline focus:outline-none text-on-surface py-1.5 pl-2.5 pr-6 bg-surface-container-low"
                     >
                       <option value="recientes">Más Recientes</option>
                       <option value="populares">Más Populares</option>
@@ -871,15 +885,19 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
               {/* Posts List */}
               <div className="space-y-4">
                 {loading && posts.length === 0 ? (
-                  <div className="py-20 text-center text-gray-500 dark:text-on-surface-variant flex flex-col items-center gap-4 bg-white dark:bg-surface-container-lowest rounded-2xl border border-gray-100 dark:border-outline-variant">
-                    <div className="w-8 h-8 border-3 border-[#ec5b13] border-t-transparent rounded-full animate-spin"></div>
+                  <div className="py-20 text-center text-on-surface-variant flex flex-col items-center gap-4 academic-card rounded-2xl">
+                    <div className="w-8 h-8 border-2 border-on-surface border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-sm font-medium">Cargando discusiones de la comunidad...</p>
                   </div>
                 ) : filteredPosts.length === 0 ? (
-                  <div className="py-16 text-center text-gray-500 dark:text-on-surface-variant bg-white dark:bg-surface-container-lowest rounded-2xl border border-gray-100 dark:border-outline-variant p-8">
-                    <span className="material-symbols-outlined text-5xl text-[#ec5b13]/60 mb-2">forum</span>
-                    <h4 className="text-lg font-bold text-gray-800 dark:text-on-surface">No se encontraron discusiones</h4>
-                    <p className="text-sm mt-1 max-w-md mx-auto text-gray-500 dark:text-on-surface-variant">Sé el primer miembro en iniciar una conversación en esta categoría o intenta con otros términos de búsqueda.</p>
+                  <div className="py-16 text-center text-on-surface-variant academic-card rounded-2xl p-8">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-container-high border border-outline-variant/40 flex items-center justify-center mx-auto mb-3">
+                      <span className="material-symbols-outlined text-2xl text-on-surface">forum</span>
+                    </div>
+                    <h4 className="serif-title text-lg font-bold text-on-surface">No se encontraron discusiones</h4>
+                    <p className="text-sm mt-1 max-w-md mx-auto text-on-surface-variant">
+                      Sé el primer miembro en iniciar una conversación en esta categoría o intenta con otros términos de búsqueda.
+                    </p>
                   </div>
                 ) : (
                   filteredPosts.map(post => {
@@ -891,73 +909,90 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                     return (
                       <article
                         key={post._id}
-                        className="bg-white dark:bg-surface-container-lowest rounded-2xl shadow-sm border border-gray-100 dark:border-outline-variant p-5 hover:shadow-md transition-all duration-200"
+                        className="academic-card rounded-2xl p-5 sm:p-6 shadow-xs transition-all duration-200"
                       >
                         <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full shrink-0 bg-gradient-to-br from-[#ec5b13] to-purple-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+                          <div className="w-11 h-11 rounded-xl shrink-0 bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface font-bold text-sm shadow-xs">
                             {authorInitials}
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                            <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-bold text-gray-900 dark:text-on-surface truncate">@{post.author}</h3>
-                                <span className="inline-flex items-center text-[10px] bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 px-1.5 py-0.5 rounded font-semibold gap-0.5" title="Identidad BUAP verificada">
+                                <h3 className="font-bold text-on-surface text-sm sm:text-base truncate">@{post.author}</h3>
+                                <span
+                                  className="inline-flex items-center text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold gap-1"
+                                  title="Identidad BUAP verificada"
+                                >
                                   <span className="material-symbols-outlined text-[12px]">verified</span>
-                                  Verificado
+                                  <span>BUAP</span>
                                 </span>
-                                <span className="text-xs text-gray-400 dark:text-on-surface-variant/70">• {post.career || 'BUAP'}</span>
+                                <span className="text-xs font-metadata-label text-on-surface-variant">• {post.career || 'BUAP'}</span>
                               </div>
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${badgeClass}`}>
                                 {post.category.replace(/^[🌟💬👨‍🏫💡🚀]\s*/, '')}
                               </span>
                             </div>
 
-                            <h4 className="text-lg font-semibold text-gray-800 dark:text-on-surface mb-2 mt-1 leading-snug">{post.title}</h4>
-                            <p className="text-gray-600 dark:text-on-surface-variant text-sm leading-relaxed mb-4 whitespace-pre-wrap">{post.content}</p>
+                            <h4 className="serif-title text-lg sm:text-xl font-bold text-on-surface mb-2 mt-1 leading-snug">
+                              {post.title}
+                            </h4>
+                            <p className="text-on-surface-variant text-sm leading-relaxed mb-4 whitespace-pre-wrap">
+                              {post.content}
+                            </p>
 
-                            <div className="flex items-center gap-6 text-gray-500 dark:text-on-surface-variant pt-1 border-t border-gray-100 dark:border-outline-variant/40">
+                            <div className="flex items-center gap-6 text-on-surface-variant pt-3 border-t border-outline-variant/30">
                               <button
                                 onClick={() => handleLike(post)}
-                                className={`flex items-center gap-1.5 transition-colors text-sm font-medium ${
-                                  hasLiked ? 'text-[#ec5b13] scale-105 font-bold' : 'hover:text-[#ec5b13]'
+                                className={`flex items-center gap-1.5 transition-colors text-xs sm:text-sm font-medium cursor-pointer ${
+                                  hasLiked ? 'text-amber-500 font-bold' : 'hover:text-on-surface'
                                 }`}
                               >
-                                <span className={`material-symbols-outlined text-[18px] ${hasLiked ? 'font-variation-settings-\'FILL\'-1' : ''}`}>thumb_up</span>
+                                <span
+                                  className="material-symbols-outlined text-[18px]"
+                                  style={hasLiked ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                                >
+                                  thumb_up
+                                </span>
                                 <span>{post.likes || 0}</span>
                               </button>
 
                               <button
                                 onClick={() => setExpandedPostId(isExpanded ? null : (post._id || null))}
-                                className={`flex items-center gap-1.5 transition-colors text-sm ${
-                                  isExpanded ? 'text-[#ec5b13] font-semibold' : 'hover:text-[#ec5b13]'
+                                className={`flex items-center gap-1.5 transition-colors text-xs sm:text-sm cursor-pointer ${
+                                  isExpanded ? 'text-on-surface font-semibold' : 'hover:text-on-surface'
                                 }`}
                               >
                                 <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
                                 <span>{post.comments?.length || 0} {post.comments?.length === 1 ? 'Respuesta' : 'Respuestas'}</span>
                               </button>
 
-                              <span className="text-xs text-gray-400 dark:text-on-surface-variant/60 ml-auto">
+                              <span className="text-xs font-metadata-label text-on-surface-variant/70 ml-auto">
                                 {new Date(post.createdAt || Date.now()).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}
                               </span>
                             </div>
 
                             {/* Comments Section inside Card */}
                             {isExpanded && (
-                              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-outline-variant space-y-3 animate-fadeIn">
+                              <div className="mt-4 pt-4 border-t border-outline-variant/30 space-y-3 animate-fadeIn">
                                 <div className="space-y-2.5">
                                   {post.comments && post.comments.length > 0 ? (
                                     post.comments.map(c => (
-                                      <div key={c.id} className="p-3.5 rounded-xl bg-gray-50 dark:bg-surface-container border border-gray-100 dark:border-outline-variant/60 text-xs sm:text-sm space-y-1">
+                                      <div
+                                        key={c.id}
+                                        className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs sm:text-sm space-y-1"
+                                      >
                                         <div className="flex items-center justify-between">
-                                          <span className="font-bold text-[#ec5b13]">@{c.author}</span>
-                                          <span className="text-[11px] text-gray-400 dark:text-on-surface-variant font-medium">🐺 BUAP</span>
+                                          <span className="font-bold text-on-surface">@{c.author}</span>
+                                          <span className="text-[10px] font-metadata-label text-on-surface-variant">Comunidad BUAP</span>
                                         </div>
-                                        <p className="text-gray-700 dark:text-on-surface leading-relaxed">{c.content}</p>
+                                        <p className="text-on-surface-variant leading-relaxed">{c.content}</p>
                                       </div>
                                     ))
                                   ) : (
-                                    <p className="text-xs text-gray-400 dark:text-on-surface-variant italic py-2">Aún no hay respuestas en esta discusión. ¡Sé el primero!</p>
+                                    <p className="text-xs text-on-surface-variant italic py-2">
+                                      Aún no hay respuestas en esta discusión. ¡Sé el primero en aportar!
+                                    </p>
                                   )}
                                 </div>
 
@@ -969,12 +1004,12 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
                                     value={commentText}
                                     onChange={(e) => setCommentText(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && post._id && handleAddComment(post._id)}
-                                    className="flex-1 bg-gray-50 dark:bg-surface border border-gray-300 dark:border-outline-variant rounded-xl px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#ec5b13] disabled:opacity-50 text-gray-800 dark:text-on-surface"
+                                    className="flex-1 bg-surface-container-low border border-outline-variant/40 rounded-xl px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-outline disabled:opacity-50 text-on-surface placeholder-on-surface-variant/60"
                                   />
                                   <button
                                     onClick={() => post._id && handleAddComment(post._id)}
                                     disabled={!forumUser}
-                                    className="px-4 py-2 rounded-xl bg-[#ec5b13] hover:bg-orange-600 text-white font-semibold text-xs sm:text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                                    className="px-4 py-2 rounded-xl bg-on-surface text-surface hover:opacity-90 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 disabled:opacity-50 shadow-xs cursor-pointer"
                                   >
                                     <span>Responder</span>
                                     <span className="material-symbols-outlined text-[16px]">send</span>
@@ -991,26 +1026,8 @@ export const ForumPage: React.FC<ForumPageProps> = ({ currentCareer = 'Ingenier�
               </div>
             </div>
           </div>
-        </main>
-
-        {/* Footer adapted from Sinergia UI */}
-        <footer className="w-full bg-white dark:bg-surface-container-lowest border-t border-gray-200 dark:border-outline-variant mt-16 py-8 px-6 transition-colors duration-300">
-          <div className="flex flex-col md:flex-row justify-between items-center max-w-6xl mx-auto gap-4">
-            <div className="flex items-center gap-4">
-              <span className="font-bold text-lg text-gray-900 dark:text-on-surface">Comunidad BUAP</span>
-              <span className="h-4 w-[1px] bg-gray-300 dark:bg-outline-variant"></span>
-              <span className="text-xs text-gray-500 dark:text-on-surface-variant">Foro de Intercambio Académico</span>
-            </div>
-            <div className="flex gap-6">
-              <Link to="/" className="text-xs text-gray-500 dark:text-on-surface-variant hover:text-[#ec5b13] dark:hover:text-[#ec5b13] transition-colors">Inicio</Link>
-              <Link to="/visualizador" className="text-xs text-gray-500 dark:text-on-surface-variant hover:text-[#ec5b13] dark:hover:text-[#ec5b13] transition-colors">Visualizador</Link>
-            </div>
-          </div>
-          <div className="text-center pb-2 pt-6 border-t border-gray-100 dark:border-outline-variant/40 mt-6 max-w-6xl mx-auto">
-            <p className="text-[10px] text-gray-400 dark:text-on-surface-variant/60 uppercase tracking-widest">🔒 Privacidad Garantizada: Tu correo institucional se protege mediante hash criptográfico SHA-256</p>
-          </div>
-        </footer>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
