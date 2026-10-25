@@ -1,5 +1,15 @@
 [
   {
+    "version": "v2.1.0",
+    "date": "25 de Octubre, 2026",
+    "title": "Actualización de Seguridad y Dependencias del Ecosistema",
+    "changes": [
+      "Blindaje de Seguridad Integral: Remediación de 14 vulnerabilidades de seguridad (CVEs) en herramientas de compilación y empaquetado (Vite, PostCSS, nanoid, source-map-js, esbuild).",
+      "Actualización de Dependencias Core: Integración de versiones estables de React 19.3.1, Tailwind CSS 4.3.3 y PostCSS 8.5.31.",
+      "Alineación con el Backend 2.1.0: Sincronización de versiones del ecosistema y compatibilidad continua con endpoints institucionales."
+    ]
+  },
+  {
     "version": "v2.0.0",
     "date": "22 de Octubre, 2026",
     "title": "Ecosistema Unificado 2.0 y Diseño Minimalista Gris Oxford",
