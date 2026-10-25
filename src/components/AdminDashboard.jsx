@@ -80,7 +80,7 @@ function AdminDashboard({ initialCareer = '', onPlanSaved }) {
             });
             const data = await res.json();
             if (res.ok) {
-                alert('✅ Propuesta aprobada y plan oficial actualizado.');
+                alert('Propuesta aprobada y plan oficial actualizado.');
                 loadAdminData();
             } else {
                 alert(data.detail || 'Error al aprobar propuesta.');
