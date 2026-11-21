@@ -1,6 +1,6 @@
 {
   "name": "student_visual_carrer_front",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "type": "module",
   "packageManager": "pnpm@11.15.1",
   "scripts": {
@@ -13,19 +13,19 @@
   "license": "ISC",
   "description": "Visualizador de Planes de Estudio BUAP - Frontend",
   "dependencies": {
-    "@tabler/icons-react": "^3.49.0",
+    "@tabler/icons-react": "^3.52.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^26.6.5",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.2.0",
-    "autoprefixer": "^10.6.1",
-    "postcss": "^8.5.31",
-    "tailwindcss": "^4.3.3",
+    "autoprefixer": "^10.7.0",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3",
     "vite": "^7.3.7"
   }

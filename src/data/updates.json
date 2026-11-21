@@ -1,5 +1,15 @@
 [
   {
+    "version": "v2.1.1",
+    "date": "20 de Noviembre, 2026",
+    "title": "Parche de Seguridad y Mantenimiento de Dependencias",
+    "changes": [
+      "Mitigación de CVE-2026-126360 en el Backend: Actualización explícita de opentelemetry-api (>=1.45.2) junto con FastAPI 0.165.0, Pydantic 2.14.4 y python-multipart 0.0.34.",
+      "Mantenimiento Preventivo del Frontend: Actualización de Tailwind CSS 4.3.5, PostCSS 8.5.33, Autoprefixer 10.7.0 y Tabler Icons 3.52.0 con auditoría limpia (0 CVEs).",
+      "Alineación de Versiones 2.1.1: Sincronización de metadatos de versión entre Frontend y Backend."
+    ]
+  },
+  {
     "version": "v2.1.0",
     "date": "25 de Octubre, 2026",
     "title": "Actualización de Seguridad y Dependencias del Ecosistema",
